@@ -1,3 +1,5 @@
+stop("--- use twosided version instead\n")
+
 # Rscript create_sample_around_TADs_sameKb.R
 
 # for a given number of genes

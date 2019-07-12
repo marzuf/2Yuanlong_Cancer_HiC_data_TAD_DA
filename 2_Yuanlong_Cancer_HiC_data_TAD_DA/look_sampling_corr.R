@@ -7,9 +7,12 @@ startTime <- Sys.time()
 
 require(reshape2)
 require(foreach)
+require(doMC)
 require(ggplot2)
 require(hrbrthemes)
 require(ggthemes)
+
+registerDoMC(40)
 
 source("../Cancer_HiC_data_TAD_DA/utils_fct.R")
 
@@ -20,8 +23,11 @@ axisCex <- 1.2
 plotType <- "png"
 myHeight <- ifelse(plotType=="png", 400, 7)
 myWidth <- myHeight
+myHeightGG <- 7
+myWidthGG <- myHeightGG 
 
 outFold <- "LOOK_SAMPLING_CORR"
+dir.create(outFold, recursive = TRUE)
 
 all_ds_corr_around_TADs_sameKb_file <- file.path("COEXPR_AROUND_TADS", "sameKb", "all_ds_around_TADs_corr.Rdata")
 all_ds_corr_around_TADs_fixKb_file <- file.path("COEXPR_AROUND_TADS", "fixKb", fixKbSize, "all_ds_around_TADs_corr.Rdata")
@@ -40,7 +46,7 @@ stopifnot(setequal(names(all_ds_corr_around_TADs_sameNbr), all_ds))
 
 ds=all_ds[1]
 
-
+cat("... prepare all_data_DT_sameKb \n")
 all_data_DT_sameKb <- foreach(ds = all_ds, .combine='rbind') %dopar% {
   ds_data <- all_ds_corr_around_TADs_sameKb[[paste0(ds)]]
   ds_data_DT <- do.call(rbind, lapply(ds_data, function(x) data.frame(x)))
@@ -51,7 +57,7 @@ all_data_DT_sameKb <- foreach(ds = all_ds, .combine='rbind') %dopar% {
 }
 all_data_DT_sameKb$sampType <- "sameKb"
 
-
+cat("... prepare all_data_DT_fixKb \n")
 all_data_DT_fixKb <- foreach(ds = all_ds, .combine='rbind') %dopar% {
   ds_data <- all_ds_corr_around_TADs_fixKb[[paste0(ds)]]
   ds_data_DT <- do.call(rbind, lapply(ds_data, function(x) data.frame(x)))
@@ -62,7 +68,7 @@ all_data_DT_fixKb <- foreach(ds = all_ds, .combine='rbind') %dopar% {
 }
 all_data_DT_fixKb$sampType <- "fixKb"
 
-
+cat("... prepare all_data_DT_sameNbr \n")
 all_data_DT_sameNbr <- foreach(ds = all_ds, .combine='rbind') %dopar% {
   ds_data <- all_ds_corr_around_TADs_sameNbr[[paste0(ds)]]
   ds_data_DT <- do.call(rbind, lapply(ds_data, function(x) data.frame(x)))
@@ -76,7 +82,7 @@ all_data_DT_sameNbr$sampType <- "sameNbr"
 
 commonCols <- Reduce(intersect, list(colnames(all_data_DT_sameNbr),colnames(all_data_DT_fixKb),colnames(all_data_DT_sameKb))) 
 
-
+cat("... prepare all_data_DT \n")
 all_data_DT <- rbind(all_data_DT_fixKb[, commonCols] , 
                      rbind(all_data_DT_sameNbr[, commonCols], all_data_DT_sameKb[, commonCols]))
 
@@ -87,6 +93,7 @@ all_vars <- commonCols[! commonCols %in% c("dataset", "region", "sampType")]
 plot_var = all_vars[1]
 
 foo <- foreach(plot_var = all_vars) %dopar% {
+  cat(paste0("... start plotting for ", plot_var, "\n"))
   stopifnot(plot_var %in% colnames(all_data_DT))
   plotList <- list(
     all_data_DT[all_data_DT$sampType == "fixKb", paste0(plot_var)],
@@ -110,6 +117,8 @@ foo <- foreach(plot_var = all_vars) %dopar% {
 
 all_data_DT$dataset_sampType <- paste0(all_data_DT$dataset, "-", all_data_DT$sampType)
 
+cat("... prepare genesCount_byDataSamp_DT \n")
+
 genesCount_byDataSamp_DT <- do.call(rbind, by(all_data_DT, all_data_DT$dataset_sampType, function(subDT) {
   data.frame(
     # totTADs = nrow(subDT),
@@ -131,7 +140,7 @@ plot_genesCount_byDataSamp_DT <- melt(genesCount_byDataSamp_DT, id =c("dataset",
 nDS <- length(unique(plot_genesCount_byDataSamp_DT$dataset))
 
 outFile <- file.path(outFold, paste0("nGenes_bySampType_boxplot.", plotType))
-ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampType)) + 
+p <- ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampType)) + 
   geom_boxplot() +
   scale_fill_ipsum() +
   scale_color_ipsum() +
@@ -144,7 +153,7 @@ ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampTy
        colour = "",
        fill = ""
   ) 
-ggsave(p, filename = outFile, height = myHeight, width = myWidth)
+ggsave(p, filename = outFile, height = myHeightGG, width = myWidthGG)
 cat(paste0("... written: ", outFile, "\n"))
 
 
@@ -153,6 +162,8 @@ pipOutFolder <- file.path("..", "Yuanlong_Cancer_HiC_data_TAD_DA", "PIPELINE", "
 all_corr_files <- list.files(pipOutFolder, recursive = TRUE, pattern="all_meanCorr_TAD.Rdata", full.names = TRUE)
 stopifnot(length(all_corr_files) > 0)
 
+
+cat("... prepare mC_DT \n")
 
 corr_file = all_corr_files[1]
 mC_DT <- foreach(corr_file = all_corr_files, .combine = 'rbind') %dopar% {
@@ -197,11 +208,22 @@ cat(paste0("... written: ", outFile, "\n"))
 all_data_DT$hicds <- dirname(all_data_DT$dataset)
 all_data_DT$exprds <- basename(all_data_DT$dataset)
 
+cat("... prepare all_data_DT_withObs \n")
+
+outFile <- file.path(outFold, "all_data_DT.Rdata")
+save(all_data_DT, file = outFile)
+cat(paste0("... written: ", outFile, "\n"))
+
+outFile <- file.path(outFold, "mC_DT.Rdata")
+save(mC_DT, file = outFile)
+cat(paste0("... written: ", outFile, "\n"))
 
 all_data_DT_withObs <- merge(all_data_DT, mC_DT, by = c("hicds", "exprds", "region"), all=TRUE)
-stopifnot(nrow(mC_DT) == nrow(all_data_DT))
+stopifnot(nrow(mC_DT) == nrow(unique(all_data_DT[,c("region", "dataset")]))) # need to subset all_data_DT because *3 for each sampType
 
 foo <- foreach(sampType = c("fixKb", "sameKb", "sameNbr")) %dopar% {
+  
+  
   
   
   plotDT <- all_data_DT_withObs[all_data_DT_withObs$sampType == sampType,]
@@ -211,9 +233,11 @@ foo <- foreach(sampType = c("fixKb", "sameKb", "sameNbr")) %dopar% {
   
   for(plot_var in all_vars) {
     
+    cat("... start plotting ", plot_var, " for ", sampType, "\n")
+    
     myy <- plotDT[,paste0(plot_var)]
     
-    outFile <- file.path(outFolder, paste0(yvar, "_vs_", xvar, "_densplot.", plotType))
+    outFile <- file.path(outFold, paste0(plot_var, "_vs_", xvar, "_densplot.", plotType))
     do.call(plotType, list(outFile, height=myHeight, width=myHeight))
     densplot(
       x = myx,

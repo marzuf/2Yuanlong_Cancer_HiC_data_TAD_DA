@@ -7,9 +7,12 @@ startTime <- Sys.time()
 
 require(reshape2)
 require(foreach)
+require(doMC)
 require(ggplot2)
 require(hrbrthemes)
 require(ggthemes)
+
+registerDoMC(40)
 
 source("../Cancer_HiC_data_TAD_DA/utils_fct.R")
 
@@ -19,7 +22,8 @@ fixKbSize <- 1000000
 plotType <- "png"
 myHeight <- ifelse(plotType=="png", 400, 7)
 myWidth <- myHeight
-
+myHeightGG <- 7
+myWidthGG <- myHeightGG 
 
 outFold <- "LOOK_SAMPLING_FEATURES"
 dir.create(outFold, recursive = TRUE)
@@ -41,7 +45,7 @@ stopifnot(setequal(names(all_ds_sample_around_TADs_sameNbr), all_ds))
 
 ds=all_ds[1]
 
-
+cat("... prepare all_data_DT_sameKb \n")
 all_data_DT_sameKb <- foreach(ds = all_ds, .combine='rbind') %dopar% {
   ds_data <- all_ds_sample_around_TADs_sameKb[[paste0(ds)]]
   ds_data_sub <- lapply(ds_data, function(tad_data) {
@@ -60,7 +64,7 @@ colnames(all_data_DT_sameKb)
 # [6] "minDist_left"  "maxDist_left"  "nGenes_right"  "minDist_right" "maxDist_right"
 # [11] "region"        "dataset"       "sampType"     
 
-
+cat("... prepare all_data_DT_fixKb \n")
 all_data_DT_fixKb <- foreach(ds = all_ds, .combine='rbind') %dopar% {
   ds_data <- all_ds_sample_around_TADs_fixKb[[paste0(ds)]]
   ds_data_sub <- lapply(ds_data, function(tad_data) {
@@ -79,7 +83,7 @@ all_data_DT_fixKb$sampType <- "fixKb"
 # [6] "maxDist_left"  "nGenes_right"  "minDist_right" "maxDist_right" "region"       
 # [11] "dataset"       "sampType"     
 
-
+cat("... prepare all_data_DT_sameNbr \n")
 all_data_DT_sameNbr <- foreach(ds = all_ds, .combine='rbind') %dopar% {
   ds_data <- all_ds_sample_around_TADs_sameNbr[[paste0(ds)]]
   ds_data_sub <- lapply(ds_data, function(tad_data) {
@@ -103,6 +107,7 @@ commonCols <- Reduce(intersect, list(colnames(all_data_DT_sameNbr),colnames(all_
 # [6] "maxDist_left"  "nGenes_right"  "minDist_right" "maxDist_right" "region"       
 # [11] "dataset"       "sampType"     
 
+cat("... prepare all_data_DT \n")
 all_data_DT <- rbind(all_data_DT_fixKb[, commonCols] , 
                      rbind(all_data_DT_sameNbr[, commonCols], all_data_DT_sameKb[, commonCols]))
 
@@ -113,6 +118,7 @@ all_vars <- commonCols[! commonCols %in% c("dataset", "region", "sampType")]
 plot_var = all_vars[1]
 
 foo <- foreach(plot_var = all_vars) %dopar% {
+  cat(paste0("... start plotting for ", plot_var, "\n"))
   stopifnot(plot_var %in% colnames(all_data_DT))
   plotList <- list(
     all_data_DT[all_data_DT$sampType == "fixKb", paste0(plot_var)],
@@ -147,6 +153,7 @@ foo <- foreach(plot_var = all_vars) %dopar% {
 
 all_data_DT$dataset_sampType <- paste0(all_data_DT$dataset, "-", all_data_DT$sampType)
 
+cat("... prepare genesCount_byDataSamp_DT \n")
 genesCount_byDataSamp_DT <- do.call(rbind, by(all_data_DT, all_data_DT$dataset_sampType, function(subDT) {
   data.frame(
     # totTADs = nrow(subDT),
@@ -163,12 +170,16 @@ genesCount_byDataSamp_DT$dataset <- gsub("^(.+)-.+$", "\\1", genesCount_byDataSa
 genesCount_byDataSamp_DT$sampType <- gsub("^.+-(.+)$", "\\1", genesCount_byDataSamp_DT$dataset_sampType)
 genesCount_byDataSamp_DT$dataset_sampType <- NULL
 
+outFile <- file.path(outFold, "genesCount_byDataSamp_DT.Rdata")
+save(genesCount_byDataSamp_DT, file = outFile)
+cat(paste0("... written: ", outFile, "\n"))
+
 plot_genesCount_byDataSamp_DT <- melt(genesCount_byDataSamp_DT, id =c("dataset", "sampType"))
 
 nDS <- length(unique(plot_genesCount_byDataSamp_DT$dataset))
 
 outFile <- file.path(outFold, paste0("nGenes_bySampType_boxplot.", plotType))
-ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampType)) + 
+p <- ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampType)) + 
   geom_boxplot() +
   scale_fill_ipsum() +
   scale_color_ipsum() +
@@ -181,7 +192,7 @@ ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampTy
        colour = "",
        fill = ""
   ) 
-ggsave(p, filename = outFile, height = myHeight, width = myWidth)
+ggsave(p, filename = outFile, height = myHeightGG, width = myWidthGG)
 cat(paste0("... written: ", outFile, "\n"))
 
 
