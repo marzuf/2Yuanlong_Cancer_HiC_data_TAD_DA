@@ -195,9 +195,8 @@ p <- ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = s
 ggsave(p, filename = outFile, height = myHeightGG, width = myWidthGG)
 cat(paste0("... written: ", outFile, "\n"))
 
-
-
-
+#############################################################################################################################
+#############################################################################################################################
 
 txt <- paste0(startTime, "\n", Sys.time(), "\n")
 cat(paste0(txt))
