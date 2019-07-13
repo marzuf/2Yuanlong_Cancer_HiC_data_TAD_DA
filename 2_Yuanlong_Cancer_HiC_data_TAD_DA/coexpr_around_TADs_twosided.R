@@ -3,6 +3,8 @@
 # Rscript coexpr_around_TADs.R sameKb
 # Rscript coexpr_around_TADs.R sameNbr
 
+stop("-- use coexpr_around_TADs.R\n")
+
 script_name <- "coexpr_around_TADs.R"
 
 startTime <- Sys.time()

@@ -32,7 +32,7 @@ pipOutFolder <- file.path(pipFolder, "PIPELINE", "OUTPUT_FOLDER")
 
 script0_name <- "0_prepGeneData"
 
-buildAll <- FALSE
+buildAll <- TRUE
 
 outFold <- "CHECK_LEFT_AND_RIGHT"
 dir.create(outFold, recursive = TRUE)
