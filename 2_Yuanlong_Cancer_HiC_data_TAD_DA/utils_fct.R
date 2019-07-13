@@ -36,3 +36,55 @@ get_meanCorr_value <- function(exprMatrix, inside_genes, outside_genes, cormet) 
   stopifnot(!is.na(meanCorr_value))
   return(meanCorr_value)
 }
+
+#############################################################################################################################
+#############################################################################################################################
+#############################################################################################################################
+
+checkGenes <- function(genes, side, region_name, gene2tad_dt, tadpos_dt, checkDistKb) {
+  
+  stopifnot(genes %in% gene2tad_dt$entrezID)
+  stopifnot(region_name %in% tadpos_dt$region)
+  
+  tad_midPos <- (tadpos_dt$start[tadpos_dt$region == region_name]  + tadpos_dt$end[tadpos_dt$region == region_name]  )/2
+  stopifnot(length(tad_midPos) == 1)  
+    
+  genes_midpos <- (gene2tad_dt$start[gene2tad_dt$entrezID %in% genes]+gene2tad_dt$end[gene2tad_dt$entrezID %in% genes])/2
+  
+  genes_chromo <- gene2tad_dt$chromo[gene2tad_dt$entrezID %in% genes]
+  
+  stopifnot( genes_chromo == gsub("(chr.+)_TAD.+", "\\1", region_name) )
+             
+  if(side == "left") {
+    stopifnot(genes_midpos <= tad_midPos)
+  } else if(side == "right") {
+    stopifnot(genes_midpos >= tad_midPos)
+  }
+    
+  if(!is.na(checkDistKb)) {
+    
+    if(is.numeric(checkDistKb)) {
+      checkDistKb_size <- checkDistKb
+    } else if(checkDistKb == "sameKb") {
+      
+      tad_size <- tadpos_dt$end[tadpos_dt$region == region_name]  - tadpos_dt$start[tadpos_dt$region == region_name]  + 1
+      stopifnot(length(tad_size) == 1)  
+      
+      checkDistKb_size <- tad_size
+    } else {
+      stop("error")
+    }
+    
+    tad_start <- (tadpos_dt$start[tadpos_dt$region == region_name])
+    tad_end <- (tadpos_dt$end[tadpos_dt$region == region_name])
+    stopifnot(length(tad_start) == 1)  
+    stopifnot(length(tad_end) == 1)  
+    
+    windowLeft <- tad_start - checkDistKb_size
+    windowRight <- tad_end + checkDistKb_size 
+    
+    stopifnot(genes_midpos >= windowLeft)
+    stopifnot(genes_midpos <= windowRight)
+    
+  }
+}
