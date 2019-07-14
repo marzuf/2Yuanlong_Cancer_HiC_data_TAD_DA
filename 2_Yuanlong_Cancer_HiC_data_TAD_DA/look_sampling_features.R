@@ -1,3 +1,6 @@
+
+# Rscript look_sampling_features.R
+
 options(scipen=100)
 
 script_name <- "look_sampling_features.R"
@@ -145,6 +148,7 @@ foo <- foreach(plot_var = all_vars) %dopar% {
     my_xlab = paste0(plot_var),
     plotTit = paste0(plot_var)
   )
+  mtext(side = 3, text = paste0("log10"), font = 3)
   foo <- dev.off()
   cat(paste0("... written: ", outFile, "\n"))
   

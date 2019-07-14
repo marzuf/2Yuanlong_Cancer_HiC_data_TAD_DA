@@ -106,7 +106,7 @@ extract_corr_values <- function(sample_values_list, value_to_extract, ds_to_take
 #############################################################################################################################
 #############################################################################################################################
 
-get_SAM_FDR_aroundTADs <- function(obs_vect, permut_values, cut_off, symDir, variableName = "", 
+get_SAM_FDR_aroundTADs <- function(obs_vect, permut_values, cut_off, symDir, nPermut = NULL, variableName = "", 
                                    withPlot=T, plotOffsetY = 0, minQuant = 0.05, maxQuant = 0.95, inputList=FALSE) {
 
   stopifnot(symDir %in% c("symmetric", "higher", "lower"))
@@ -119,9 +119,14 @@ get_SAM_FDR_aroundTADs <- function(obs_vect, permut_values, cut_off, symDir, var
   # => with the values from sampling across boundaries, no need to take the average
   
   ## NEED TO DIVIDE BY NUMBER OF SAMPLING
-  
-  nPseudoPermut <- length(permut_values)/length(obs_vect)  # ????????????????????? 
-  
+  if(is.null(nPermut)) {
+    nPseudoPermut <- length(permut_values)/length(obs_vect)  # ????????????????????? 
+  } else { 
+   nPseudoPermut <- nPermut
+   stopifnot(is.numeric(nPermut)) 
+  }
+
+
   if(symDir == "symmetric") {
     observ_N <- sum(abs(obs_vect) >= abs(cut_off))  
     random_R <- sum(abs(permut_values) >= abs(cut_off))/nPseudoPermut
@@ -134,9 +139,12 @@ get_SAM_FDR_aroundTADs <- function(obs_vect, permut_values, cut_off, symDir, var
   } else{
     stop("should never happen\n")
   }
+
+
   empFDR <- random_R/observ_N
   # then the empirical FDR is R/N
   # = average signif from permut / # observed signif
+
   if(withPlot){
     if(inputList) {
       warning("... cannot draw for Shuffle data\n")
@@ -164,6 +172,8 @@ get_SAM_FDR_aroundTADs <- function(obs_vect, permut_values, cut_off, symDir, var
       
     }
   }
+
+
   invisible(empFDR)
 }
 

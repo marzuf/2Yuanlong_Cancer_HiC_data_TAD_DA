@@ -91,6 +91,8 @@ cat("... prepare all_data_DT \n")
 all_data_DT <- rbind(all_data_DT_fixKb[, commonCols] , 
                      rbind(all_data_DT_sameNbr[, commonCols], all_data_DT_sameKb[, commonCols]))
 
+nDS <- length(unique(all_data_DT$dataset))
+
 all_vars <- commonCols[! commonCols %in% c("dataset", "region", "sampType")]
 
 ######################################################
@@ -150,8 +152,6 @@ genesCount_byDataSamp_DT$dataset_sampType <- NULL
 
 plot_genesCount_byDataSamp_DT <- melt(genesCount_byDataSamp_DT, id =c("dataset", "sampType"))
 
-nDS <- length(unique(plot_genesCount_byDataSamp_DT$dataset))
-
 outFile <- file.path(outFold, paste0("nGenes_bySampTypeDataset_boxplot.", plotType))
 p <- ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampType)) + 
   geom_boxplot() +
@@ -200,7 +200,6 @@ valuesCount_byDataSamp_DT$dataset_sampType <- NULL
 
 plot_valuesCount_byDataSamp_DT <- melt(valuesCount_byDataSamp_DT, id =c("dataset", "sampType"))
 
-nDS <- length(unique(plot_valuesCount_byDataSamp_DT$dataset))
 
 outFile <- file.path(outFold, paste0("nCorrValues_bySampTypeDataset_boxplot.", plotType))
 p <- ggplot(plot_valuesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampType)) + 
@@ -248,7 +247,6 @@ rownames(valuesCount_bySamp_DT) <- NULL
 
 plot_valuesCount_bySamp_DT <- melt(valuesCount_bySamp_DT, id =c( "sampType"))
 
-nDS <- length(unique(plot_valuesCount_bySamp_DT$dataset))
 
 outFile <- file.path(outFold, paste0("nCorrValues_bySampType_barplot.", plotType))
 p <- ggplot(plot_valuesCount_bySamp_DT, aes(x = variable, y = value, fill = sampType)) + 
@@ -360,7 +358,7 @@ foo <- foreach(sampType = c("fixKb", "sameKb", "sameNbr")) %dopar% {
     
     myy <- plotDT[,paste0(plot_var)]
     
-    outFile <- file.path(outFold, paste0(plot_var, "_vs_", xvar, "_densplot.", plotType))
+    outFile <- file.path(outFold, paste0(plot_var, "_vs_", xvar, "_", sampType, "_densplot.", plotType))
     do.call(plotType, list(outFile, height=myHeight, width=myHeight))
     densplot(
       x = myx,
@@ -372,9 +370,10 @@ foo <- foreach(sampType = c("fixKb", "sameKb", "sameNbr")) %dopar% {
       cex.lab = axisCex,
       cex.axis = axisCex
     )
-    mtext(side=3, text = paste0("(nDS = ", nDS, ")"))
+    mtext(side=3, text = paste0("(nDS = ", nDS, " - ", sampType, ")"))
     addCorr(x=myx, legPos="topleft",
             y=myy, bty='n')
+    if(grepl("meanCorr", plot_var)) curve(1*x, lty=2, col="darkgrey", add=TRUE)
     foo <- dev.off()
     cat(paste0("... written: ", outFile, "\n"))
     
