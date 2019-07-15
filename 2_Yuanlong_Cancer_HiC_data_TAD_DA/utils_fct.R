@@ -107,7 +107,7 @@ extract_corr_values <- function(sample_values_list, value_to_extract, ds_to_take
 #############################################################################################################################
 
 get_SAM_FDR_aroundTADs <- function(obs_vect, permut_values, cut_off, symDir, nPermut = NULL, variableName = "", 
-                                   withPlot=T, plotOffsetY = 0, minQuant = 0.05, maxQuant = 0.95, inputList=FALSE) {
+                                   withPlot=T, plotOffsetY = 0, minQuant = 0.05, maxQuant = 0.95, inputList=FALSE, sortToPlot=FALSE) {
 
   stopifnot(symDir %in% c("symmetric", "higher", "lower"))
   # N = number of real solutions higher than cut-off
@@ -153,8 +153,14 @@ get_SAM_FDR_aroundTADs <- function(obs_vect, permut_values, cut_off, symDir, nPe
       
       sampledRange <- quantile(permut_values, probs = c(minQuant, maxQuant))
       nValues <- length(obs_vect)
+
+      if(sortToPlot) {
+        plot_vect <- sort(obs_vect, decreasing=TRUE)
+      } else {
+        plot_vect <- obs_vect
+      }
       
-      plot(obs_vect, cex=0.7, pch=16, xlab="",
+      plot(plot_vect, cex=0.7, pch=16, xlab="",
            main = variableName, 
            ylab= paste0(variableName, " observed values"), 
            xlim = c(0, nValues), ylim = c(min(obs_vect)-plotOffsetY, max(obs_vect)+plotOffsetY),

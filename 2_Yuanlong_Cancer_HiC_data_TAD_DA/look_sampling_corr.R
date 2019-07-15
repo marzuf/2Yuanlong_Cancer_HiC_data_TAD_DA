@@ -165,7 +165,9 @@ p <- ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = s
        subtitle=paste0("nDS = ", nDS),
        colour = "",
        fill = ""
-  ) 
+  )+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+
 ggsave(p, filename = outFile, height = myHeightGG, width = myWidthGG)
 cat(paste0("... written: ", outFile, "\n"))
 
@@ -201,6 +203,8 @@ valuesCount_byDataSamp_DT$dataset_sampType <- NULL
 plot_valuesCount_byDataSamp_DT <- melt(valuesCount_byDataSamp_DT, id =c("dataset", "sampType"))
 
 
+plot_valuesCount_byDataSamp_DT$variable <- gsub("_cond", "\ncond", plot_valuesCount_byDataSamp_DT$variable)
+
 outFile <- file.path(outFold, paste0("nCorrValues_bySampTypeDataset_boxplot.", plotType))
 p <- ggplot(plot_valuesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampType)) + 
   geom_boxplot() +
@@ -214,7 +218,9 @@ p <- ggplot(plot_valuesCount_byDataSamp_DT, aes(x = variable, y = value, fill = 
        subtitle=paste0("nDS = ", nDS),
        colour = "",
        fill = ""
-  ) 
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+
 ggsave(p, filename = outFile, height = myHeightGG, width = myWidthGG)
 cat(paste0("... written: ", outFile, "\n"))
 
@@ -247,6 +253,7 @@ rownames(valuesCount_bySamp_DT) <- NULL
 
 plot_valuesCount_bySamp_DT <- melt(valuesCount_bySamp_DT, id =c( "sampType"))
 
+plot_valuesCount_byDataSamp_DT$variable <- gsub("_cond", "\ncond", plot_valuesCount_byDataSamp_DT$variable)
 
 outFile <- file.path(outFold, paste0("nCorrValues_bySampType_barplot.", plotType))
 p <- ggplot(plot_valuesCount_bySamp_DT, aes(x = variable, y = value, fill = sampType)) + 
@@ -261,7 +268,9 @@ p <- ggplot(plot_valuesCount_bySamp_DT, aes(x = variable, y = value, fill = samp
        subtitle=paste0("nDS = ", nDS),
        colour = "",
        fill = ""
-  ) 
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+
 ggsave(p, filename = outFile, height = myHeightGG, width = myWidthGG)
 cat(paste0("... written: ", outFile, "\n"))
 

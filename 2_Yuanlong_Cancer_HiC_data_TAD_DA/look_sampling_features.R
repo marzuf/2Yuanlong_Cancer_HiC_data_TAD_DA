@@ -182,6 +182,9 @@ plot_genesCount_byDataSamp_DT <- melt(genesCount_byDataSamp_DT, id =c("dataset",
 
 nDS <- length(unique(plot_genesCount_byDataSamp_DT$dataset))
 
+plot_genesCount_byDataSamp_DT$variable <- gsub("_cond", "\ncond", plot_genesCount_byDataSamp_DT$variable)
+
+
 outFile <- file.path(outFold, paste0("nGenes_bySampType_boxplot.", plotType))
 p <- ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = sampType)) + 
   geom_boxplot() +
@@ -190,12 +193,14 @@ p <- ggplot(plot_genesCount_byDataSamp_DT, aes(x = variable, y = value, fill = s
   theme_ipsum_rc(grid="XY", axis_title_just="c", axis_title_size=14) + 
   labs(x="", 
        y=paste0(),
-       title=paste0("# of genes"),
+       title=paste0("# of missing genes"),
        # caption="Brought to you by the letter 'g'",
        subtitle=paste0("nDS = ", nDS),
        colour = "",
        fill = ""
-  ) 
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+
 ggsave(p, filename = outFile, height = myHeightGG, width = myWidthGG)
 cat(paste0("... written: ", outFile, "\n"))
 
