@@ -210,3 +210,280 @@ plot_FDR_with_observedSignif <- function(yaxis_empFDR_vect, xaxis_cutoff, y2_obs
 }
 
 
+#############################################################################################################################
+############################################################################################################################# 
+#############################################################################################################################
+
+
+# plot_two_FDR_with_observedSignif(first_var_FDR= all_FDR[["empFDR_logFC"]],
+#                                    first_var_nbrSignif = all_FDR[["nbrSignif_logFC"]],
+#                                              scd_var_FDR = all_FDR[["empFDR_intraTADcorr"]],
+#                                  scd_var_nbrSignif = all_FDR[["nbrSignif_intraTADcorr"]],
+#                                              first_var_name = "meanFC",
+#                                              scd_var_name = "meanCorrV0")
+plot_two_FDR_with_observedSignif <- function(first_var_FDR, first_var_nbrSignif,
+                                             scd_var_FDR, scd_var_nbrSignif,
+                                             first_var_name,
+                                             scd_var_name,
+                                             first_var_col = "red",
+                                             scd_var_col = "blue",
+                                             p_pch = 1,
+                                             l_lty = 1,
+                                             ya_pct = TRUE,
+                                             ya_name = "emp. FDR",
+                                             ya_name_short = ya_name,
+                                             yb_name = "# obs. signif. TADs",
+                                             yb_name_short = "# TADs",
+                                             yb_log10 = TRUE,
+                                             ya_cut_off = NULL,
+                                             ya_lty = 2,
+                                             ya_col = "darkgrey",
+                                             mainLeg = TRUE, 
+                                             cutoffLeg = TRUE) {
+  stopifnot(names(first_var_FDR) == names(first_var_nbrSignif))
+  stopifnot(names(scd_var_FDR) == names(scd_var_nbrSignif)) 
+  
+  x1 <- as.numeric(names(first_var_FDR))
+  x2 <- as.numeric(names(scd_var_FDR))
+  stopifnot(!is.na(x1))
+  stopifnot(!is.na(x2))
+  
+  if(yb_log10) {
+    y1b <- log10(first_var_nbrSignif)
+    y2b <- log10(scd_var_nbrSignif)
+    yb_lab <- paste0(yb_name, " (log10)")
+  } else {
+    y1b <- first_var_nbrSignif
+    y2b <- scd_var_nbrSignif
+    yb_lab <- paste0(yb_name)
+  }
+  
+  if(ya_pct) {
+    y1 <- first_var_FDR*100
+    y2 <- scd_var_FDR*100
+    y_lab <- paste0(ya_name, " (%)")
+    ya_cut_off_line <- ya_cut_off*100
+  } else {
+    y1 <- first_var_FDR
+    y2 <- scd_var_FDR
+    y_lab <- paste0(ya_name, " (%)")
+    ya_cut_off_line <- ya_cut_off
+  }
+  y_max <- max(c(y1[!is.infinite(y1)],y2[!is.infinite(y2)]), na.rm = TRUE)
+  yb_max <- max(c(y1b[!is.infinite(y1b)],y2b[!is.infinite(y2b)]), na.rm=TRUE)
+  
+  initmar <- par()$mar
+  par(mar = c(5,5,2,5))    
+  
+  # 1ST VARIABLE: 1st axis
+  plot(
+    x = x1,
+    y = y1,
+    type = "l",
+    col = first_var_col,
+   # pch = 16,
+   lty = l_lty,
+    axes = FALSE,
+    xlab = "",
+    ylab = y_lab,
+    ylim = c(0, y_max)
+  )
+  axis(2, at = seq(0, 100, by = 10), labels = TRUE)
+  axis(1, line=1,col=first_var_col,col.ticks=first_var_col,col.axis=first_var_col)
+  mtext(paste0(first_var_name, " cutoff"),1,line=1,at=mean(x1),col=first_var_col)
+  
+  if(!is.null(ya_cut_off)) {
+    abline(h = ya_cut_off_line, lty = ya_lty, col = ya_col)
+  }
+  #box(bty="u")
+  # 1ST VARIABLE: 2nd axis
+  par(new = T)
+  plot(
+    x = x1,
+    y = y1b,
+    type = "p",
+    col = first_var_col,
+    pch = p_pch,
+    axes = FALSE,
+    xlab = "",
+    ylab = paste0(""),
+    ylim = c(0, yb_max)
+  )
+  axis(side = 4, col="black")
+  mtext(side = 4, line = 3, paste0(yb_lab), col = "black")
+  # 2ND VARIABLE: 1st axis
+  par(new = T)
+  plot(
+    x = x2,
+    y = y2,
+    type = "l",
+    lty = l_lty,
+    col = scd_var_col,
+   # pch = 16,
+    axes = FALSE,
+    xlab = "",
+    ylab = paste0(""),
+    ylim = c(0, y_max)
+  )
+  axis(1, line=3,col=scd_var_col,col.ticks=scd_var_col,col.axis=scd_var_col)   
+  mtext(paste0(scd_var_name, " cutoff"),1,line=3, at=mean(x2),col=scd_var_col)
+  # 2ND VARIABLE: 2nd axis
+  par(new = T)
+  plot(
+    x = x2,
+    y = y2b,
+    type = "p",
+    col = scd_var_col,
+    pch = p_pch,
+    axes = FALSE,
+    xlab = "",
+    ylab = paste0(""),
+    ylim = c(0, yb_max)
+  )
+  if(mainLeg) {
+    legend(x="topright",
+           c(ya_name_short, yb_name_short, first_var_name, scd_var_name),
+           lty=c(1,-1,-1,-1,-1),
+           pch = c(-1, p_pch, -1,-1,-1),
+           text.col = c("black", "black", first_var_col, scd_var_col),
+           bty="n")
+    }
+  if(cutoffLeg) {
+    legend(x="bottomleft", bty="n", legend=c(paste0(ya_name_short, " cutoff: ", ya_cut_off)), text.col = ya_col, lty = ya_lty, col = ya_col)
+  }
+  par(mar = initmar)
+  on.exit(par(mar = initmar))
+}
+
+
+
+
+#############################################################################################################################
+############################################################################################################################# 
+#############################################################################################################################
+
+
+plot_meanFC_meanCorr_FDRthresh <- function(
+  dataDT,
+  var1,
+  var2,
+  var1_cutoff,
+  var2_cutoff,
+  var1_name = var1,
+  var2_name = var2,
+  abs_var1 = FALSE,
+  abs_var2 = FALSE,
+  annotCol =NULL,
+  plotTit = "",
+  plotSub = "",
+  plotCex = 1.2,
+  fileSuffix = NULL,
+  plotType = "png"
+) {
+  if(is.null(annotCol)) {
+    stopifnot(annotCol %in% colnames(dataDT))
+  }
+  stopifnot(var1 %in% colnames(dataDT))
+  stopifnot(var2 %in% colnames(dataDT))
+  if(abs_var1) {
+    dataDT[, var1] <- abs(dataDT[, var1])
+    myxlab <- paste0("abs(", var1_name, ")")
+  } else{
+    myxlab <- paste0(var1_name)
+  }
+  if(abs_var2) {
+    dataDT[, var2] <- abs(dataDT[, var2])
+    myylab <- paste0("abs(", var2_name, ")")
+  } else{
+    myylab <- paste0(var2_name)
+  }
+  
+  myx <- dataDT[, var1]
+  myy <- dataDT[, var2]
+  
+  ### START PLOTTING THE DENSPLOT
+  if(!is.null(fileSuffix)) {
+    plotHeight <- ifelse(plotType=="png", 400, 7)
+    plotWidth <- plotHeight
+    outFile <- paste0(fileSuffix, "_densplot.", plotType)
+    dir.create(dirname(outFile), recursive = TRUE)
+    do.call(plotType, list(outFile, height = plotHeight, width = plotWidth))
+  }
+  densplot(
+    x = myx,
+    y = myy,
+    xlab = myxlab,
+    ylab = myylab,
+    cex.lab = plotCex,
+    cex.axis = plotCex
+  )
+  title(main = paste0(plotTit))
+  mtext(text = plotSub, side = 3, font=3, line=-1)
+  abline(v = var1_cutoff, lty=2, col="darkgrey")
+  abline(h = var2_cutoff, lty=2, col="darkgrey")
+  legend("bottomright",
+         legend = c(paste0(var1_name, " cutoff = ", var1_cutoff),
+                    paste0(var2_name, " cutoff = ", var2_cutoff)),
+         bty="n")
+  
+  if(is.infinite(var1_cutoff) & is.infinite(var2_cutoff)) {
+    dotCols <- "black"
+  } else if(is.infinite(var2_cutoff)) {
+    dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var1)] >= var1_cutoff), "black", "grey"))
+  } else if(is.infinite(var1_cutoff)) {
+    dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var2)] >= var2_cutoff), "black", "grey"))
+  } else {
+    dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var1)] >= var1_cutoff & dataDT[x,paste0(var2)] >= var2_cutoff), "black", "grey"))
+  }
+  if(!is.null(fileSuffix)) {
+    foo <- dev.off()
+    cat(paste0("... written: ", outFile, "\n"))
+  }
+  ### START PLOTTING THE DARK GREY PLOT  
+  if(!is.null(fileSuffix)) {
+    outFile <- paste0(fileSuffix, "_greyplot.", plotType)
+    do.call(plotType, list(outFile, height = plotHeight, width = plotWidth))
+  }
+  plot(
+    x = myx,
+    y = myy,
+    xlab =  myxlab,
+    ylab =  myylab,
+    pch = 16,
+    col = dotCols,
+    cex = 0.7,
+    cex.lab = plotCex,
+    cex.axis = plotCex
+  )
+  title(main = paste0(plotTit))
+  mtext(text = plotSub, side = 3, font=3, line=-1)
+  abline(v = var1_cutoff, lty=2, col="red")
+  abline(h = var2_cutoff, lty=2, col="red")
+  legend("bottomright",
+       legend = c(paste0(var1_name, " cutoff = ", var1_cutoff),
+                    paste0(var2_name, " cutoff = ", var2_cutoff)),
+         bty="n")
+  if(!is.null(annotCol)) {
+    if(length(dotCols) > 1) {
+      toAnnot <- which(dotCols == "black")
+      if(length(toAnnot) >= 1)
+        text(x = myx[toAnnot],
+             y = myy[toAnnot],
+             labels = dataDT[,paste0(annotCol)][toAnnot],
+             pos=3,
+             cex = 0.7)
+    }
+  }
+  if(!is.null(fileSuffix)) {
+    foo <- dev.off()
+    cat(paste0("... written: ", outFile, "\n"))
+  }
+}
+
+
+
+
+
+
+
+

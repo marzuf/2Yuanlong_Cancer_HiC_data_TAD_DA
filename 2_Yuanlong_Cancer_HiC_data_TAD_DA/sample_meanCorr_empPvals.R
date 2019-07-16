@@ -31,7 +31,7 @@ stopifnot(file.exists(obs_corr_file))
 all_obs_corr <- eval(parse(text = load(obs_corr_file)))
 
 all_sampTypes <- c("sameKb", "fixKb", "sameNbr")
-all_corrTypes <- c("meanCorr", "meanCorr_right", "meanCorr_left")
+all_corrTypes <- c("meanCorr", "meanCorr_right", "meanCorr_left", "meanCorrLeftRight")
 
 
 samp_type = "sameKb"
@@ -54,6 +54,22 @@ all_cors_empPval_dt <- foreach(samp_type = all_sampTypes, .combine='cbind') %do%
       lapply(sub_data, function(x) x[[paste0(corr_type)]])
     }))
     all_samp_corrs <- na.omit(all_samp_corrs)
+
+    if(corr_type == "meanCorrLeftRight"){
+      all_samp_corrs_left <-  unlist(lapply(all_ds_corr_around, function(sub_data){
+        lapply(sub_data, function(x) x[[paste0("meanCorr_left")]])
+      }))
+      all_samp_corrs_left <- na.omit(all_samp_corrs_left)
+
+      all_samp_corrs_right <-  unlist(lapply(all_ds_corr_around, function(sub_data){
+        lapply(sub_data, function(x) x[[paste0("meanCorr_right")]])
+      }))
+      all_samp_corrs_right <- na.omit(all_samp_corrs_left)
+
+
+      all_samp_corrs <- c(all_samp_corrs_left, all_samp_corrs_right)
+      
+    }
     
     all_empPvals <- sapply(all_obs_corr, function(x) {
       (sum(all_samp_corrs >= x) + 1)/(length(all_samp_corrs) + 1)

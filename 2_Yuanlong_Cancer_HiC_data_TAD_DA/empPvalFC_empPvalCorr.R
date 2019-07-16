@@ -128,7 +128,11 @@ save(all_dt, file = outFile)
 cat(paste0("... written: ", outFile, "\n"))
 
 
+nDS <- length(unique(all_dt$dataset))
+nTADs <- nrow(all_dt)
+
 #############################################################################################################################
+############################################################################################################################# ... vs. empPvalMeanFC & ... vs. empPvalMeanCorr
 #############################################################################################################################
 
 all_x <- c("empPval_meanCorr", "empPval_meanFC")
@@ -154,8 +158,9 @@ for(x_var in all_x) {
       cex.lab = cexPlot,
       xlab = paste0(x_var),
       ylab = paste0(y_var),
-      main = paste0(y_var, " vs. ", x_var)
+      main = paste0(y_var, " vs.\n", x_var)
     )
+    mtext(side = 3, text = paste0("nDS = ", nDS, " - nTADs = ", nTADs), font = 3)
     foo <- dev.off()
     cat(paste0("... written: ", outFile, "\n"))
     
@@ -163,14 +168,15 @@ for(x_var in all_x) {
     outFile <- file.path(outFold, paste0(y_var, "_vs_", x_var, "_log10.", plotType))
     do.call(plotType, list(outFile, height=myHeight, width=myWidth))
     densplot(
-      x = log10(myx),
-      y = log10(all_dt[,paste0(y_var)]),
+      x = - log10(myx),
+      y = - log10(all_dt[,paste0(y_var)]),
       cex.axis = cexPlot,
       cex.lab = cexPlot,
-      xlab = paste0(x_var, " [log10]"),
-      ylab = paste0(y_var, " [log10]"),
-      main = paste0(y_var, " vs. ", x_var)
+      xlab = paste0(x_var, " [-log10]"),
+      ylab = paste0(y_var, " [-log10]"),
+      main = paste0(y_var, " vs.\n", x_var)
     )
+    mtext(side = 3, text = paste0("nDS = ", nDS, " - nTADs = ", nTADs), font = 3)
     foo <- dev.off()
     cat(paste0("... written: ", outFile, "\n"))
     
@@ -180,6 +186,61 @@ for(x_var in all_x) {
   
 }
 
+
+#############################################################################################################################
+############################################################################################################################# empPvalMeanCorr vs. empPvalMeanFC
+#############################################################################################################################
+
+all_x <- c("empPval_meanFC")
+
+all_y <- c("empPval_meanCorr")
+
+for(x_var in all_x) {
+  
+  stopifnot(x_var %in% colnames(all_dt))
+  
+  myx <- all_dt[,paste0(x_var)]
+  
+  foo <- foreach(y_var = all_y) %dopar% {
+    
+    
+    
+    outFile <- file.path(outFold, paste0(y_var, "_vs_", x_var, ".", plotType))
+    do.call(plotType, list(outFile, height=myHeight, width=myWidth))
+    densplot(
+      x = myx,
+      y = all_dt[,paste0(y_var)],
+      cex.axis = cexPlot,
+      cex.lab = cexPlot,
+      xlab = paste0(x_var),
+      ylab = paste0(y_var),
+      main = paste0(y_var, " vs.\n", x_var)
+    )
+    mtext(side = 3, text = paste0("nDS = ", nDS, " - nTADs = ", nTADs), font = 3)
+    foo <- dev.off()
+    cat(paste0("... written: ", outFile, "\n"))
+    
+    
+    outFile <- file.path(outFold, paste0(y_var, "_vs_", x_var, "_log10.", plotType))
+    do.call(plotType, list(outFile, height=myHeight, width=myWidth))
+    densplot(
+      x = - log10(myx),
+      y = - log10(all_dt[,paste0(y_var)]),
+      cex.axis = cexPlot,
+      cex.lab = cexPlot,
+      xlab = paste0(x_var, " [-log10]"),
+      ylab = paste0(y_var, " [-log10]"),
+      main = paste0(y_var, " vs.\n", x_var)
+    )
+    mtext(side = 3, text = paste0("nDS = ", nDS, " - nTADs = ", nTADs), font = 3)
+    foo <- dev.off()
+    cat(paste0("... written: ", outFile, "\n"))
+    
+  }
+  
+  
+  
+}
 
 #############################################################################################################################
 #############################################################################################################################
