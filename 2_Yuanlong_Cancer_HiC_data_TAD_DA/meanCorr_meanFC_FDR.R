@@ -66,6 +66,8 @@ fc_col <- "dodgerblue1"
 corr_col <- "darkolivegreen4"
 fdr_thresh <- 0.2
 
+fdr_thresh_seq <- seq(0.05, 0.5, by=0.05)
+
 
 for(hicds in all_hicds) {
   
@@ -160,11 +162,34 @@ for(hicds in all_hicds) {
     
 
     
+    signifTADs_FC_and_CorrV0 <- lapply(fdr_thresh_seq , function(cutoff_fdr) {
+      fc_cut_off <- min(as.numeric(as.character(na.omit(names(fc_fdr)[fc_fdr <= cutoff_fdr]))))
+      corr_cut_off <- min(as.numeric(as.character(na.omit(names(corr_fdr)[corr_fdr <= fdr_thresh]))))
+      nSignif <- sum(abs(plotDT$meanFC) >= fc_cut_off & plotDT$meanCorr >= corr_cut_off)
+      list(
+        fc_cut_off = fc_cut_off,
+        corr_cut_off = corr_cut_off,
+        nTADS_signif = nSignif
+      )
+    })
+    names(signifTADs_FC_and_CorrV0) <- paste0(fdr_thresh_seq)
+    
+    outFile <- file.path(outFolder, hicds, exprds, paste0("signifTADs_FC_and_CorrV0.Rdata"))
+    save(signifTADs_FC_and_CorrV0, file = outFile)
+    cat(paste0("... written: ", outFile, "\n"))
+    
+
+        
+    
+    
+    
     
     
     
     samp_type = "sameNbr"    
-    foo <- foreach(samp_type = all_sampTypes) %dopar% {
+    
+    
+    signifTADs_bySampType <- foreach(samp_type = all_sampTypes) %dopar% {
       fixSizeKb <- ifelse(samp_type == "fixKb", 1000000, "")
       
       # SAM_EMP_MEASUREMENT_MEANCORR/fixKb/1000000/Panc1_rep12_40kb/TCGApaad_wt_mutKRAS/all_empFDR_seq.Rdata
@@ -178,7 +203,9 @@ for(hicds in all_hicds) {
       # [7] "sample_meanCorrRight_onlyDS"     "sample_meanCorrLeftRight_onlyDS"
       all_corr_types <- names(all_meanCorrSample_FDR)
       corr_type <- "sample_meanCorr_allDS"
-      for(corr_type in all_corr_types) {
+     
+      
+      signifTADs_bySampType_byCorrType <- foreach(corr_type = all_corr_types) %do% {
         
         
         
@@ -222,27 +249,37 @@ for(hicds in all_hicds) {
           plotType= plotType
         )
         
+
+        ### MISS THE MEAN CORR TYPE !!!
         
+        signifTADs <- lapply(fdr_thresh_seq , function(cutoff_fdr) {
+          fc_cut_off <- min(as.numeric(as.character(na.omit(names(fc_fdr)[fc_fdr <= cutoff_fdr]))))
+          corr_cut_off <- min(as.numeric(as.character(na.omit(names(corr_fdr)[corr_fdr <= fdr_thresh]))))
+          nSignif <- sum(abs(plotDT$meanFC) >= fc_cut_off & plotDT$meanCorr >= corr_cut_off)
+          list(
+            fc_cut_off = fc_cut_off,
+            corr_cut_off = corr_cut_off,
+            nTADS_signif = nSignif
+          )
+        })
+        names(signifTADs) <- paste0(fdr_thresh_seq)
         
-        
-        
-        
-        
+
+        signifTADs
         
         
       } # end iterating the different meanCorr for the current samp_type
       
+      names(signifTADs_bySampType_byCorrType) <- all_corr_types
+      signifTADs_bySampType_byCorrType      
       
-      
-      
-      
-      
-      
-      
-
             
     } # end iterating over samptypes
-    
+    names(signifTADs_bySampType) <- all_sampTypes
+    signifTADs_FC_and_allCorrs <- signifTADs_bySampType
+    outFile <- file.path(outFolder, hicds, exprds, paste0("signifTADs_FC_and_allCorrs.Rdata"))
+    save(signifTADs_FC_and_allCorrs, file = outFile)
+    cat(paste0("... written: ", outFile, "\n"))
     
   } # end iterating over exprds
   
