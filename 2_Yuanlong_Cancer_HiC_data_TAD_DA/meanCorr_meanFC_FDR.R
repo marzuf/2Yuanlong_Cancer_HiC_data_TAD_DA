@@ -16,7 +16,6 @@ cat("> START ", script_name, "\n")
 
 SSHFS <- FALSE
 
-require(tools)
 require(foreach)
 require(doMC)
 registerDoMC(ifelse(SSHFS, 2, 40))
@@ -40,6 +39,9 @@ plotCex <- 1.4
 pipOutFolder <- file.path("..", "Yuanlong_Cancer_HiC_data_TAD_DA", "PIPELINE", "OUTPUT_FOLDER")
 stopifnot(dir.exists(pipOutFolder))
 
+
+samInFolder <- file.path("SAM_EMP_MEASUREMENT_MEANCORR")
+stopifnot(dir.exists(samInFolder))
 
 args <- commandArgs(trailingOnly = TRUE)
 stopifnot(length(args) == 2 | length(args) == 0)
@@ -164,12 +166,12 @@ for(hicds in all_hicds) {
     
     signifTADs_FC_and_CorrV0 <- lapply(fdr_thresh_seq , function(cutoff_fdr) {
       fc_cut_off <- min(as.numeric(as.character(na.omit(names(fc_fdr)[fc_fdr <= cutoff_fdr]))))
-      corr_cut_off <- min(as.numeric(as.character(na.omit(names(corr_fdr)[corr_fdr <= fdr_thresh]))))
+      corr_cut_off <- min(as.numeric(as.character(na.omit(names(corr_fdr)[corr_fdr <= cutoff_fdr]))))
       nSignif <- sum(abs(plotDT$meanFC) >= fc_cut_off & plotDT$meanCorr >= corr_cut_off)
       list(
         fc_cut_off = fc_cut_off,
         corr_cut_off = corr_cut_off,
-        nTADS_signif = nSignif
+        nTADs_signif = nSignif
       )
     })
     names(signifTADs_FC_and_CorrV0) <- paste0(fdr_thresh_seq)
@@ -178,22 +180,13 @@ for(hicds in all_hicds) {
     save(signifTADs_FC_and_CorrV0, file = outFile)
     cat(paste0("... written: ", outFile, "\n"))
     
-
-        
-    
-    
-    
-    
-    
-    
     samp_type = "sameNbr"    
-    
-    
     signifTADs_bySampType <- foreach(samp_type = all_sampTypes) %dopar% {
       fixSizeKb <- ifelse(samp_type == "fixKb", 1000000, "")
       
       # SAM_EMP_MEASUREMENT_MEANCORR/fixKb/1000000/Panc1_rep12_40kb/TCGApaad_wt_mutKRAS/all_empFDR_seq.Rdata
-      meanCorr_FDR_file <- file.path("SAM_EMP_MEASUREMENT_MEANCORR", samp_type, fixSizeKb, hicds, exprds, "all_empFDR.Rdata")
+      
+      meanCorr_FDR_file <- file.path(samInFolder, samp_type, fixSizeKb, hicds, exprds, "all_empFDR.Rdata")
       stopifnot(file.exists(meanCorr_FDR_file))
       
       all_meanCorrSample_FDR <- eval(parse(text = load(meanCorr_FDR_file)))
@@ -203,6 +196,7 @@ for(hicds in all_hicds) {
       # [7] "sample_meanCorrRight_onlyDS"     "sample_meanCorrLeftRight_onlyDS"
       all_corr_types <- names(all_meanCorrSample_FDR)
       corr_type <- "sample_meanCorr_allDS"
+      corr_type <- "sample_meanCorr_onlyDS"
      
       
       signifTADs_bySampType_byCorrType <- foreach(corr_type = all_corr_types) %do% {
@@ -227,7 +221,9 @@ for(hicds in all_hicds) {
                                          scd_var_col = corr_col,
                                          ya_cut_off = fdr_thresh)
         title(main = paste0(hicds, " - ", exprds))
-        mtext(text = paste0("nTADs=", nTADs), side = 3, font=3, line=-1)
+        # mtext(text = paste0(gsub("sample_", "", corr_type), " - nTADs=", nTADs), side = 3, font=3, line=-1)
+        # mtext(text = paste0("nTADs=", nTADs), side = 3, font=3, line=-1)
+        mtext(text = paste0(samp_type, " - nTADs=", nTADs), side = 3, font=3, line=-1)
         foo <- dev.off()
         cat(paste0("... written: ", outFile, "\n"))
         
@@ -244,9 +240,11 @@ for(hicds in all_hicds) {
           var2_cutoff = corr_fdr_cut_off,
           abs_var1 = TRUE,
           plotTit = paste0(hicds, " - ", exprds),
-          plotSub = paste0("nTADs=", nTADs),
+          plotSub = paste0(samp_type, " - ", gsub("sample_", "", corr_type), " - nTADs=", nTADs),
+          # plotSub = paste0("nTADs=", nTADs),
           fileSuffix = outFileSuffix,
-          plotType= plotType
+          plotType= plotType,
+          legSuppTxt = paste0("FDR thresh.: ",fdr_thresh)
         )
         
 
@@ -254,12 +252,12 @@ for(hicds in all_hicds) {
         
         signifTADs <- lapply(fdr_thresh_seq , function(cutoff_fdr) {
           fc_cut_off <- min(as.numeric(as.character(na.omit(names(fc_fdr)[fc_fdr <= cutoff_fdr]))))
-          corr_cut_off <- min(as.numeric(as.character(na.omit(names(corr_fdr)[corr_fdr <= fdr_thresh]))))
+          corr_cut_off <- min(as.numeric(as.character(na.omit(names(corr_fdr)[corr_fdr <= cutoff_fdr]))))
           nSignif <- sum(abs(plotDT$meanFC) >= fc_cut_off & plotDT$meanCorr >= corr_cut_off)
           list(
             fc_cut_off = fc_cut_off,
             corr_cut_off = corr_cut_off,
-            nTADS_signif = nSignif
+            nTADs_signif = nSignif
           )
         })
         names(signifTADs) <- paste0(fdr_thresh_seq)

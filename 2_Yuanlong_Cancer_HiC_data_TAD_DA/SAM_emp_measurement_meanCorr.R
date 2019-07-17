@@ -131,13 +131,20 @@ for(hicds in all_hicds) {
         all_samplings <- c("sample_meanCorr_allDS","sample_meanCorrLeft_allDS","sample_meanCorrRight_allDS", "sample_meanCorrLeftRight_allDS",
                            "sample_meanCorr_onlyDS","sample_meanCorrLeft_onlyDS","sample_meanCorrRight_onlyDS", "sample_meanCorrLeftRight_onlyDS" )
         # all_samplings=all_samplings[1]
+        sampling_vals_type = "sample_meanCorr_onlyDS"
         all_empFDR <- foreach(sampling_vals_type = all_samplings) %dopar% {
           
-          if(grepl("LeftRight", sampling_vals_type)){
-            nbrPermut <- nbr_permut * 2
-          } else{
-            nbrPermut <- nbr_permut 
-          }
+        if(grepl("onlyDS", sampling_vals_type)){
+          nbrPermut <- 1
+        }else{
+          nbrPermut <- nbr_permut 
+        }
+
+        if(grepl("LeftRight", sampling_vals_type)){
+            nbrPermut <- nbrPermut * 2
+        } 
+            
+        
           cat("...... start: ", sampling_vals_type, "\n")
           
           sampling_values <- eval(parse(text = sampling_vals_type))

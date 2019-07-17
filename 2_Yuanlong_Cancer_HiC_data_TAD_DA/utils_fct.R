@@ -378,7 +378,8 @@ plot_meanFC_meanCorr_FDRthresh <- function(
   plotSub = "",
   plotCex = 1.2,
   fileSuffix = NULL,
-  plotType = "png"
+  plotType = "png",
+  legSuppTxt = ""
 ) {
   if(is.null(annotCol)) {
     stopifnot(annotCol %in% colnames(dataDT))
@@ -422,7 +423,8 @@ plot_meanFC_meanCorr_FDRthresh <- function(
   abline(v = var1_cutoff, lty=2, col="darkgrey")
   abline(h = var2_cutoff, lty=2, col="darkgrey")
   legend("bottomright",
-         legend = c(paste0(var1_name, " cutoff = ", var1_cutoff),
+         legend = c(legSuppTxt,
+                    paste0(var1_name, " cutoff = ", var1_cutoff),
                     paste0(var2_name, " cutoff = ", var2_cutoff)),
          bty="n")
   
@@ -460,7 +462,8 @@ plot_meanFC_meanCorr_FDRthresh <- function(
   abline(v = var1_cutoff, lty=2, col="red")
   abline(h = var2_cutoff, lty=2, col="red")
   legend("bottomright",
-       legend = c(paste0(var1_name, " cutoff = ", var1_cutoff),
+       legend = c(legSuppTxt, 
+                  paste0(var1_name, " cutoff = ", var1_cutoff),
                     paste0(var2_name, " cutoff = ", var2_cutoff)),
          bty="n")
   if(!is.null(annotCol)) {

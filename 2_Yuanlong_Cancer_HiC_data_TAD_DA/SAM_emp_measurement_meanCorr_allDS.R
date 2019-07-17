@@ -104,11 +104,19 @@ foo <- foreach(samp_type = all_sampTypes) %do% {
     # all_samplings=all_samplings[1]
     all_empFDR_seq <- foreach(sampling_vals_type = all_samplings) %do% {
       
-      if(grepl("LeftRight", sampling_vals_type)){
-        nbrPermut <- nbr_permut * 2
-      } else{
+      if(grepl("onlyDS", sampling_vals_type)){
+        nbrPermut <- 1
+      }else{
         nbrPermut <- nbr_permut 
       }
+      
+      if(grepl("LeftRight", sampling_vals_type)){
+        nbrPermut <- nbrPermut * 2
+      } 
+      
+      
+      
+      
       cat("...... start: ", sampling_vals_type, "\n")
       
       sampling_values <- eval(parse(text = sampling_vals_type))
