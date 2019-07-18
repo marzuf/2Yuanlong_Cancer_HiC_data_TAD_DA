@@ -15,6 +15,7 @@ cat("> START ", script_name, "\n")
 SSHFS <- FALSE
 
 buildData <- FALSE
+separateHeatmap <- FALSE
 
 require(foreach)
 require(doMC)
@@ -22,8 +23,8 @@ registerDoMC(ifelse(SSHFS, 2, 40))
 require(ggplot2)
 require(reshape2)
 require(metap)
+require(lattice)
 require(RColorBrewer)
-
 hm.palette <- colorRampPalette(rev(brewer.pal(9, 'YlOrRd')), space='Lab')
 
 source("../Cancer_HiC_data_TAD_DA/utils_fct.R")
@@ -214,44 +215,45 @@ allDS_intersect_DT$hicds <- as.character(allDS_intersect_DT$hicds)
 allDS_intersect_DT$exprds <- as.character(allDS_intersect_DT$exprds)
 allDS_intersect_DT$dataset <- paste0(allDS_intersect_DT$hicds, " - ", allDS_intersect_DT$exprds)
 
-ds = unique(allDS_intersect_DT$dataset)[1]
-
 # HEATMAP SEPARATELY FOR EACH DATASET
-for(ds in unique(allDS_intersect_DT$dataset)) {
-  intersectDT <- allDS_intersect_DT[allDS_intersect_DT$dataset == ds, c("FDR_threshold", "adjPval_threshold", "intersect_nSignifTADs", "FDR_nSignifTADs", "adjCombPval_nSignifTADs")]
-  stopifnot(nrow(intersectDT) > 0)
-  
-  intersectDT$FDR_threshold_label <- paste0(intersectDT$FDR_threshold, "\n(n=", intersectDT$FDR_nSignifTADs, ")")
-  intersectDT$adjPval_threshold_label <- paste0(intersectDT$adjPval_threshold, "\n(n=", intersectDT$adjCombPval_nSignifTADs, ")")
-  
-  myxlab <- "FDR thresh."
-  myylab <- "adj. comb. pval. thresh."
-  
-  ds_intersect_plot <- ggplot(intersectDT, aes(x=FDR_threshold_label, y=adjPval_threshold_label, fill = intersect_nSignifTADs))+
-    geom_tile(color = "white")+
-    geom_text(aes(label = intersect_nSignifTADs), color = "black", size = 6, fontface="bold") +
-    scale_fill_gradientn(colours = hm.palette(100))+
-    guides(fill = FALSE)+ 
-    labs(title = paste0(gsub(" - ", "\n", ds)),
-         subtitle = paste0("intersect signif. TADs"),
-        x = paste0(myxlab),
-         y = paste0(myylab)
-         )+
-    theme(
-      axis.text = element_text(size=12),
-      axis.title = element_text(size=14, face="bold"),
-      plot.title = element_text(size=18, face="bold", hjust=0.5),
-      plot.subtitle = element_text(size=16, face="italic", hjust=0.5),
-      panel.grid.major = element_blank(),
-      panel.border = element_blank(),
-      panel.background = element_blank()
-    )
-    # coord_equal() # make the x and y at the same scale => same as coord_fixed(ratio = 1)
-  outFile <- file.path(outFolder, paste0( gsub(" ", "", gsub("-", "_", ds)), "_intersectSignifTADs_heatmap.", plotType))
-  ggsave(ds_intersect_plot, filename = outFile, height = myHeightGG, width = myWidthGG)
-  cat(paste0("... written: ", outFile, "\n"))  
-}
+myxlab <- "FDR thresh."
+myylab <- "adj. comb. pval. thresh."
 
+if(separateHeatmap) {
+  ds = unique(allDS_intersect_DT$dataset)[1]
+  for(ds in unique(allDS_intersect_DT$dataset)) {
+    intersectDT <- allDS_intersect_DT[allDS_intersect_DT$dataset == ds, c("FDR_threshold", "adjPval_threshold", "intersect_nSignifTADs", "FDR_nSignifTADs", "adjCombPval_nSignifTADs")]
+    stopifnot(nrow(intersectDT) > 0)
+    
+    intersectDT$FDR_threshold_label <- paste0(intersectDT$FDR_threshold, "\n(n=", intersectDT$FDR_nSignifTADs, ")")
+    intersectDT$adjPval_threshold_label <- paste0(intersectDT$adjPval_threshold, "\n(n=", intersectDT$adjCombPval_nSignifTADs, ")")
+    
+    
+    ds_intersect_plot <- ggplot(intersectDT, aes(x=FDR_threshold_label, y=adjPval_threshold_label, fill = intersect_nSignifTADs))+
+      geom_tile(color = "white")+
+      geom_text(aes(label = intersect_nSignifTADs), color = "black", size = 6, fontface="bold") +
+      scale_fill_gradientn(colours = hm.palette(100))+
+      guides(fill = FALSE)+ 
+      labs(title = paste0(gsub(" - ", "\n", ds)),
+           subtitle = paste0("intersect signif. TADs"),
+          x = paste0(myxlab),
+           y = paste0(myylab)
+           )+
+      theme(
+        axis.text = element_text(size=12),
+        axis.title = element_text(size=14, face="bold"),
+        plot.title = element_text(size=18, face="bold", hjust=0.5),
+        plot.subtitle = element_text(size=16, face="italic", hjust=0.5),
+        panel.grid.major = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank()
+      )
+      # coord_equal() # make the x and y at the same scale => same as coord_fixed(ratio = 1)
+    outFile <- file.path(outFolder, paste0( gsub(" ", "", gsub("-", "_", ds)), "_intersectSignifTADs_heatmap.", plotType))
+    ggsave(ds_intersect_plot, filename = outFile, height = myHeightGG, width = myWidthGG)
+    cat(paste0("... written: ", outFile, "\n"))  
+  }
+}
 # HEATMAP SEPARATELY FOR AVERAGE VALUES OVER DS
 nDS <- length(unique(allDS_intersect_DT$dataset))
 avgDT_dt <- allDS_intersect_DT[, c("FDR_threshold", "adjPval_threshold", "intersect_nSignifTADs", "FDR_nSignifTADs", "adjCombPval_nSignifTADs")]
@@ -284,6 +286,150 @@ outFile <- file.path(outFolder, paste0("avgAllDS_intersectSignifTADs_heatmap.", 
 ggsave(avg_intersect_plot, filename = outFile, height = myHeightGG, width = myWidthGG)
 cat(paste0("... written: ", outFile, "\n"))
 
+nDS <- length(unique(allDS_intersect_DT$dataset))
+
+# HEATMAP FOR POOLED INTERSECT => this is just the sum !!!
+# all_fdr <- unique(allDS_intersect_DT$FDR_threshold)
+# fdr = all_fdr[1]  
+# pooled_dt <- foreach(fdr = all_fdr, .combine='rbind') %do% {
+#   sub_fdr_dt <- allDS_intersect_DT[allDS_intersect_DT$FDR_threshold == fdr,]
+#   stopifnot(nrow(sub_fdr_dt) > 0)
+#   all_pval <- unique(sub_fdr_dt$adjPval_threshold)
+#   pval=all_pval[1]
+#   pval_dt <- foreach(pval = all_pval, .combine='rbind') %do% {
+#     sub_dt <- sub_fdr_dt[sub_fdr_dt$adjPval_threshold ==pval,]
+#     stopifnot(nrow(sub_dt) > 0)
+#     all_fdr_tads <- unlist(sapply(1:nrow(sub_dt), function(i) {
+#               sub_dt
+#               hic=sub_dt$hicds[i]
+#               expr=sub_dt$exprds[i]
+#               tads=sub_dt$FDR_signifTADs[i]
+#               as.character(sapply(unlist(strsplit(tads, ",")), function(x) paste(hic, expr, x,sep="-")))  
+#     }))
+#     all_pval_tads <- unlist(sapply(1:nrow(sub_dt), function(i) {
+#       sub_dt
+#       hic=sub_dt$hicds[i]
+#       expr=sub_dt$exprds[i]
+#       tads=sub_dt$adjCombPval_signifTADs[i]
+#       as.character(sapply(unlist(strsplit(tads, ",")), function(x) paste(hic, expr, x,sep="-")))  
+#     }))
+#     all_intersect_tads <- intersect(all_fdr_tads, all_pval_tads)
+#     data.frame(
+#       FDR_threshold = fdr,
+#       adjPval_threshold = pval,
+#       FDR_signifTADs = paste0(all_fdr_tads, collapse=","),
+#       adjCombPval_signifTADs = paste0(all_pval_tads, collapse=","),
+#       intersect_signifTADs = paste0(all_intersect_tads, collapse=","),
+#       FDR_nSignifTADs = length(all_fdr_tads),
+#       adjCombPval_nSignifTADs = length(all_pval_tads),
+#       intersect_nSignifTADs = length(all_intersect_tads),
+#       stringsAsFactors = FALSE
+#     )
+#   } # end-for each iterating over pval
+#   pval_dt
+# }
+sumDT_dt <- allDS_intersect_DT[, c("FDR_threshold", "adjPval_threshold", "intersect_nSignifTADs", "FDR_nSignifTADs", "adjCombPval_nSignifTADs")]
+sumDT <- aggregate(.~FDR_threshold + adjPval_threshold, sum,data=sumDT_dt)
+# pooled_dt[pooled_dt$FDR_threshold==0.1 & 
+#             pooled_dt$adjPval_threshold == 0.01, c("FDR_nSignifTADs", "adjCombPval_nSignifTADs")]
+# sumDT[sumDT$FDR_threshold==0.1 & 
+#         sumDT$adjPval_threshold == 0.01, c("FDR_nSignifTADs", "adjCombPval_nSignifTADs")]
+sumDT <- round(sumDT, 2)
+sumDT$FDR_threshold_label <- paste0(sumDT$FDR_threshold, "\n(n=", sumDT$FDR_nSignifTADs, ")")
+sumDT$adjPval_threshold_label <- paste0(sumDT$adjPval_threshold, "\n(n=", sumDT$adjCombPval_nSignifTADs, ")")
+
+avg_intersect_plot <- ggplot(sumDT, aes(x=FDR_threshold_label, y=adjPval_threshold_label, fill = intersect_nSignifTADs))+
+  geom_tile(color = "white")+
+  geom_text(aes(label = intersect_nSignifTADs), color = "black", size = 6, fontface="bold") +
+  scale_fill_gradientn(colours = hm.palette(100))+
+  guides(fill = FALSE)+ 
+  labs(title = paste0("Sum over all ds (n=", nDS, ")"),
+       subtitle = paste0("intersect signif. TADs"),
+       x = paste0(myxlab),
+       y = paste0(myylab)
+  )+
+  theme(
+    axis.text = element_text(size=12),
+    axis.title = element_text(size=14, face="bold"),
+    plot.title = element_text(size=18, face="bold", hjust=0.5),
+    plot.subtitle = element_text(size=16, face="italic", hjust=0.5),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank()
+  )
+
+outFile <- file.path(outFolder, paste0("sumAllDS_intersectSignifTADs_heatmap.", plotType))
+ggsave(avg_intersect_plot, filename = outFile, height = myHeightGG, width = myWidthGG)
+cat(paste0("... written: ", outFile, "\n"))
+
+
+
+
+# HEATMAP FOR THE AVERAGE ALL DS
+
+
+avgDT_dt <- allDS_intersect_DT[, c("FDR_threshold", "adjPval_threshold", "intersect_nSignifTADs", "FDR_nSignifTADs", "adjCombPval_nSignifTADs")]
+avgDT <- aggregate(.~FDR_threshold + adjPval_threshold, mean,data=avgDT_dt)
+avgDT <- round(avgDT, 2)
+avgDT$FDR_threshold_label <- paste0(avgDT$FDR_threshold, "\n(n=", avgDT$FDR_nSignifTADs, ")")
+avgDT$adjPval_threshold_label <- paste0(avgDT$adjPval_threshold, "\n(n=", avgDT$adjCombPval_nSignifTADs, ")")
+
+avg_intersect_plot <- ggplot(avgDT, aes(x=FDR_threshold_label, y=adjPval_threshold_label, fill = intersect_nSignifTADs))+
+  geom_tile(color = "white")+
+  geom_text(aes(label = intersect_nSignifTADs), color = "black", size = 6, fontface="bold") +
+  scale_fill_gradientn(colours = hm.palette(100))+
+  guides(fill = FALSE)+ 
+  labs(title = paste0("Avg. over all ds (n=", nDS, ")"),
+       subtitle = paste0("intersect signif. TADs"),
+       x = paste0(myxlab),
+       y = paste0(myylab)
+  )+
+  theme(
+    axis.text = element_text(size=12),
+    axis.title = element_text(size=14, face="bold"),
+    plot.title = element_text(size=18, face="bold", hjust=0.5),
+    plot.subtitle = element_text(size=16, face="italic", hjust=0.5),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank()
+  )
+
+outFile <- file.path(outFolder, paste0("avgAllDS_intersectSignifTADs_heatmap.", plotType))
+ggsave(avg_intersect_plot, filename = outFile, height = myHeightGG, width = myWidthGG)
+cat(paste0("... written: ", outFile, "\n"))
+
+
+########################################################################################## LATTICE PLOT
+
+lattice_dt <- allDS_intersect_DT[, c("FDR_threshold", "adjPval_threshold", "intersect_nSignifTADs", "FDR_nSignifTADs", "adjCombPval_nSignifTADs")]
+
+# lattice_dt$thresholdComb <- interaction(lattice_dt$FDR_threshold, lattice_dt$adjPval_threshold)
+# lattice_dt$thresholdComb_label <- paste0("FDR thresh = ", lattice_dt$FDR_threshold, ";\nadj. comb. Pval. thresh = ", lattice_dt$adjPval_threshold)
+lattice_dt$thresholdComb_label <- paste0("F=", lattice_dt$FDR_threshold, ";P=", lattice_dt$adjPval_threshold)
+lattice_dt$thresholdComb <- interaction(lattice_dt$adjPval_threshold, lattice_dt$FDR_threshold)
+lattice_dt$thresholdComb_label <- paste0("Pval<=", lattice_dt$adjPval_threshold, "; FDR<=", lattice_dt$FDR_threshold)
+
+
+melt_lattice_dt <- melt(lattice_dt, id=c("FDR_threshold", "adjPval_threshold", "thresholdComb", "thresholdComb_label"))
+colnames(melt_lattice_dt) [colnames(melt_lattice_dt) == "value"] <- "nSignifTADs"
+melt_lattice_dt$variable <- gsub("_nSignifTADs", "", melt_lattice_dt$variable)
+
+
+outFile <- file.path(outFolder, paste0("allDS_nSignifTADs_density_lattice.", plotType))
+do.call(plotType, list(outFile, height=myHeight*3, width=myWidth*3))
+
+densityplot(~nSignifTADs |thresholdComb_label, groups  = variable,data = melt_lattice_dt, #auto.key = TRUE, 
+            # par.strip.text=list(cex=1), # width of the strip bar
+            par.strip.text = list(cex = 1, font = 4, col = "brown"),
+            layout = c(5, 5),
+            scales=list(y=list(relation="free"),
+                        x=list(relation="free")
+                        ),
+            auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(melt_lattice_dt$variable))),
+            main = paste0("# signif. TADs"))
+
+foo <- dev.off()
+cat(paste0("... written: ", outFile, "\n"))
 
 
 
