@@ -379,8 +379,22 @@ plot_meanFC_meanCorr_FDRthresh <- function(
   plotCex = 1.2,
   fileSuffix = NULL,
   plotType = "png",
-  legSuppTxt = ""
+  legSuppTxt = "",
+  mTextLine = -1,
+  toPlot = c("grey", "density"),
+  fullName=FALSE,
+  twoInOne = FALSE
 ) {
+
+  if(twoInOne) {
+   stopifnot(length(toPlot) == 2)
+  }
+
+  if(!twoInOne & length(toPlot) == 2)
+  stopifnot(!fullName)
+
+  stopifnot(toPlot %in% c("grey", "density"))
+
   if(is.null(annotCol)) {
     stopifnot(annotCol %in% colnames(dataDT))
   }
@@ -401,88 +415,288 @@ plot_meanFC_meanCorr_FDRthresh <- function(
   
   myx <- dataDT[, var1]
   myy <- dataDT[, var2]
+
+
+ if("density" %in% toPlot) {
   
-  ### START PLOTTING THE DENSPLOT
-  if(!is.null(fileSuffix)) {
-    plotHeight <- ifelse(plotType=="png", 400, 7)
-    plotWidth <- plotHeight
-    outFile <- paste0(fileSuffix, "_densplot.", plotType)
-    dir.create(dirname(outFile), recursive = TRUE)
-    do.call(plotType, list(outFile, height = plotHeight, width = plotWidth))
-  }
-  densplot(
-    x = myx,
-    y = myy,
-    xlab = myxlab,
-    ylab = myylab,
-    cex.lab = plotCex,
-    cex.axis = plotCex
-  )
-  title(main = paste0(plotTit))
-  mtext(text = plotSub, side = 3, font=3, line=-1)
-  abline(v = var1_cutoff, lty=2, col="darkgrey")
-  abline(h = var2_cutoff, lty=2, col="darkgrey")
-  legend("bottomright",
-         legend = c(legSuppTxt,
-                    paste0(var1_name, " cutoff = ", var1_cutoff),
-                    paste0(var2_name, " cutoff = ", var2_cutoff)),
-         bty="n")
-  
-  if(is.infinite(var1_cutoff) & is.infinite(var2_cutoff)) {
-    dotCols <- "black"
-  } else if(is.infinite(var2_cutoff)) {
-    dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var1)] >= var1_cutoff), "black", "grey"))
-  } else if(is.infinite(var1_cutoff)) {
-    dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var2)] >= var2_cutoff), "black", "grey"))
-  } else {
-    dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var1)] >= var1_cutoff & dataDT[x,paste0(var2)] >= var2_cutoff), "black", "grey"))
-  }
-  if(!is.null(fileSuffix)) {
-    foo <- dev.off()
-    cat(paste0("... written: ", outFile, "\n"))
-  }
-  ### START PLOTTING THE DARK GREY PLOT  
-  if(!is.null(fileSuffix)) {
-    outFile <- paste0(fileSuffix, "_greyplot.", plotType)
-    do.call(plotType, list(outFile, height = plotHeight, width = plotWidth))
-  }
-  plot(
-    x = myx,
-    y = myy,
-    xlab =  myxlab,
-    ylab =  myylab,
-    pch = 16,
-    col = dotCols,
-    cex = 0.7,
-    cex.lab = plotCex,
-    cex.axis = plotCex
-  )
-  title(main = paste0(plotTit))
-  mtext(text = plotSub, side = 3, font=3, line=-1)
-  abline(v = var1_cutoff, lty=2, col="red")
-  abline(h = var2_cutoff, lty=2, col="red")
-  legend("bottomright",
-       legend = c(legSuppTxt, 
-                  paste0(var1_name, " cutoff = ", var1_cutoff),
-                    paste0(var2_name, " cutoff = ", var2_cutoff)),
-         bty="n")
-  if(!is.null(annotCol)) {
-    if(length(dotCols) > 1) {
-      toAnnot <- which(dotCols == "black")
-      if(length(toAnnot) >= 1)
-        text(x = myx[toAnnot],
-             y = myy[toAnnot],
-             labels = dataDT[,paste0(annotCol)][toAnnot],
-             pos=3,
-             cex = 0.7)
-    }
-  }
-  if(!is.null(fileSuffix)) {
-    foo <- dev.off()
-    cat(paste0("... written: ", outFile, "\n"))
+      ### START PLOTTING THE DENSPLOT
+      if(!is.null(fileSuffix)) {
+        plotHeight <- ifelse(plotType=="png", 400, 7)
+        plotWidth <- plotHeight
+        if(twoInOne) plotWidth <- plotWidth*2
+        if(fullName) {
+          outFile <- paste0(fileSuffix)
+        } else {
+          if(twoInOne) {
+            outFile <- paste0(fileSuffix, "_densAndGreyPlots.", plotType)
+          } else {
+            outFile <- paste0(fileSuffix, "_densplot.", plotType)
+          }  
+        }
+        dir.create(dirname(outFile), recursive = TRUE)
+
+        do.call(plotType, list(outFile, height = plotHeight, width = plotWidth))
+        if(twoInOne) {
+          par(mfrow=c(1,2) ) 
+        }
+      }
+      densplot(
+        x = myx,
+        y = myy,
+        xlab = myxlab,
+        ylab = myylab,
+        cex.lab = plotCex,
+        cex.axis = plotCex
+      )
+      title(main = paste0(plotTit))
+      mtext(text = plotSub, side = 3, font=3, line=mTextLine)
+      abline(v = var1_cutoff, lty=2, col="darkgrey")
+      abline(h = var2_cutoff, lty=2, col="darkgrey")
+      legend("bottomright",
+             legend = c(legSuppTxt,
+                        paste0(var1_name, " cutoff = ", var1_cutoff),
+                        paste0(var2_name, " cutoff = ", var2_cutoff)),
+             bty="n")
+      if(!is.null(fileSuffix)) {
+        if(!twoInOne ) {
+        foo <- dev.off()
+        cat(paste0("... written in densityplot: ", outFile, "\n"))
+        }
+      }
+ }
+
+  if("grey" %in% toPlot) {
+
+      ### START PLOTTING THE DARK GREY PLOT  
+      if(!is.null(fileSuffix)) {
+        plotHeight <- ifelse(plotType=="png", 400, 7)
+        plotWidth <- plotHeight
+
+        if(!twoInOne) {
+          if(fullName) {
+            outFile <- paste0(fileSuffix)
+          } else {
+            outFile <- paste0(fileSuffix, "_greyplot.", plotType)
+          }
+          do.call(plotType, list(outFile, height = plotHeight, width = plotWidth))
+        }
+      }
+      
+      if(is.infinite(var1_cutoff) & is.infinite(var2_cutoff)) {
+        dotCols <- "black"
+      } else if(is.infinite(var2_cutoff)) {
+        dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var1)] >= var1_cutoff), "black", "grey"))
+      } else if(is.infinite(var1_cutoff)) {
+        dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var2)] >= var2_cutoff), "black", "grey"))
+      } else {
+        dotCols <- sapply(1:nrow(dataDT), function(x) ifelse( (dataDT[x,paste0(var1)] >= var1_cutoff & dataDT[x,paste0(var2)] >= var2_cutoff), "black", "grey"))
+      }
+
+      plot(
+        x = myx,
+        y = myy,
+        xlab =  myxlab,
+        ylab =  myylab,
+        pch = 16,
+        col = dotCols,
+        cex = 0.7,
+        cex.lab = plotCex,
+        cex.axis = plotCex
+      )
+      title(main = paste0(plotTit))
+      mtext(text = plotSub, side = 3, font=3, line=mTextLine)
+      abline(v = var1_cutoff, lty=2, col="red")
+      abline(h = var2_cutoff, lty=2, col="red")
+      legend("bottomright",
+           legend = c(legSuppTxt, 
+                      paste0(var1_name, " cutoff = ", var1_cutoff),
+                        paste0(var2_name, " cutoff = ", var2_cutoff)),
+             bty="n")
+      if(!is.null(annotCol)) {
+        if(length(dotCols) > 1) {
+          toAnnot <- which(dotCols == "black")
+          if(length(toAnnot) >= 1)
+            text(x = myx[toAnnot],
+                 y = myy[toAnnot],
+                 labels = dataDT[,paste0(annotCol)][toAnnot],
+                 pos=3,
+                 cex = 0.7)
+        }
+      }
+      if(!is.null(fileSuffix)) {
+        foo <- dev.off()
+        cat(paste0("... written in greyplot: ", outFile, "\n"))
+      }
   }
 }
 
+
+
+
+
+#############################################################################################################################
+############################################################################################################################# 
+#############################################################################################################################
+
+
+plot_meanFC_meanCorr_signifTADs <- function(
+  dataDT,
+  var1,
+  var2,
+  signifCol,
+  signifTADs,
+  var1_name = var1,
+  var2_name = var2,
+  abs_var1 = FALSE,
+  abs_var2 = FALSE,
+  annotCol =NULL,
+  plotTit = "",
+  plotSub = "",
+  plotCex = 1.2,
+  fileSuffix = NULL,
+  plotType = "png",
+  legTxt = "",
+  mTextLine = -1,
+  toPlot = c("grey", "density"),
+  fullName=FALSE,
+  twoInOne = FALSE
+) {
+
+  if(twoInOne) {
+   stopifnot(length(toPlot) == 2)
+  }
+
+  if(!twoInOne & length(toPlot) == 2)
+  stopifnot(!fullName)
+
+  stopifnot(toPlot %in% c("grey", "density"))
+
+  if(is.null(annotCol)) {
+    stopifnot(annotCol %in% colnames(dataDT))
+  }
+  stopifnot(var1 %in% colnames(dataDT))
+  stopifnot(var2 %in% colnames(dataDT))
+  if(abs_var1) {
+    dataDT[, var1] <- abs(dataDT[, var1])
+    myxlab <- paste0("abs(", var1_name, ")")
+  } else{
+    myxlab <- paste0(var1_name)
+  }
+  if(abs_var2) {
+    dataDT[, var2] <- abs(dataDT[, var2])
+    myylab <- paste0("abs(", var2_name, ")")
+  } else{
+    myylab <- paste0(var2_name)
+  }
+  
+  myx <- dataDT[, var1]
+  myy <- dataDT[, var2]
+
+
+ if("density" %in% toPlot) {
+  
+      ### START PLOTTING THE DENSPLOT
+      if(!is.null(fileSuffix)) {
+        plotHeight <- ifelse(plotType=="png", 400, 7)
+        plotWidth <- plotHeight
+        if(twoInOne) plotWidth <- plotWidth*2
+        if(fullName) {
+          outFile <- paste0(fileSuffix)
+        } else {
+          if(twoInOne) {
+            outFile <- paste0(fileSuffix, "_densAndGreyPlots.", plotType)
+          } else {
+            outFile <- paste0(fileSuffix, "_densplot.", plotType)
+          }  
+        }
+        dir.create(dirname(outFile), recursive = TRUE)
+        cat("... open in density\n")
+        do.call(plotType, list(outFile, height = plotHeight, width = plotWidth))
+        if(twoInOne) {
+          par(mfrow=c(1,2) ) 
+        }
+      }
+      densplot(
+        x = myx,
+        y = myy,
+        xlab = myxlab,
+        ylab = myylab,
+        cex.lab = plotCex,
+        cex.axis = plotCex
+      )
+      title(main = paste0(plotTit))
+      mtext(text = plotSub, side = 3, font=3, line=mTextLine)
+
+      legend("bottomright",
+           legend = c(legTxt),
+             bty="n")
+
+
+      if(!is.null(fileSuffix)) {
+        if(!twoInOne ) {
+        foo <- dev.off()
+        cat(paste0("... written densityplot: ", outFile, "\n"))
+        }
+      }
+ }
+
+  if("grey" %in% toPlot) {
+
+      ### START PLOTTING THE DARK GREY PLOT  
+      if(!is.null(fileSuffix)) {
+        plotHeight <- ifelse(plotType=="png", 400, 7)
+        plotWidth <- plotHeight
+
+        if(!twoInOne) {
+          if(fullName) {
+            outFile <- paste0(fileSuffix)
+          } else {
+            outFile <- paste0(fileSuffix, "_greyplot.", plotType)
+          }
+          cat("... open in grey\n")
+          do.call(plotType, list(outFile, height = plotHeight, width = plotWidth))
+        }
+      }
+      
+
+
+      dotCols <- ifelse(dataDT[,signifCol] %in% signifTADs, "black", "grey")
+
+      plot(
+        x = myx,
+        y = myy,
+        xlab =  myxlab,
+        ylab =  myylab,
+        pch = 16,
+        col = dotCols,
+        cex = 0.7,
+        cex.lab = plotCex,
+        cex.axis = plotCex
+      )
+      title(main = paste0(plotTit))
+      mtext(text = plotSub, side = 3, font=3, line=mTextLine)
+
+      legend("bottomright",
+           legend = c(legTxt),
+             bty="n")
+
+      if(!is.null(annotCol)) {
+        if(length(dotCols) > 1) {
+          toAnnot <- which(dotCols == "black")
+          if(length(toAnnot) >= 1)
+            text(x = myx[toAnnot],
+                 y = myy[toAnnot],
+                 labels = dataDT[,paste0(annotCol)][toAnnot],
+                 pos=3,
+                 cex = 0.7)
+        }
+      }
+      if(!is.null(fileSuffix)) {
+        foo <- dev.off()
+        cat(paste0("... written greyplot: ", outFile, "\n"))
+      }
+  }
+}
 
 
 

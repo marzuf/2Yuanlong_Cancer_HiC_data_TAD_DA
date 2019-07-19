@@ -21,7 +21,6 @@ require(doMC)
 registerDoMC(ifelse(SSHFS, 2, 40))
 require(ggplot2)
 require(reshape2)
-require(metap)
 require(lattice)
 require(RColorBrewer)
 hm.palette <- colorRampPalette(rev(brewer.pal(9, 'YlOrRd')), space='Lab')
@@ -97,6 +96,18 @@ if(buildData) {
       stopifnot(file.exists(rd_file))
       tad_rD <- eval(parse(text = load(rd_file)))
       all_regs <- names(tad_rD)
+      
+      
+      fc_file <-  file.path(pipOutFolder, hicds, exprds, script3_name, "all_meanLogFC_TAD.Rdata")
+      corr_file <- file.path(pipOutFolder, hicds, exprds, script4_name, "all_meanCorr_TAD.Rdata")
+      stopifnot(file.exists(fc_file))
+      stopifnot(file.exists(corr_file))  
+      tad_logFC <- eval(parse(text = load(fc_file)))
+      tad_meanCorr <- eval(parse(text = load(corr_file)))
+      stopifnot(setequal(names(tad_logFC), all_regs))
+      stopifnot(setequal(names(tad_meanCorr), all_regs))
+      
+      
       de_file <- file.path(pipOutFolder, hicds, exprds, script1_name, "DE_topTable.Rdata")
       stopifnot(file.exists(de_file))
       de_DT <- eval(parse(text = load(de_file)))
@@ -124,15 +135,29 @@ if(buildData) {
         sd(de_DT$logFC[de_DT$genes %in% de_tad_id])
       })    
       names(sdLogFC) <- all_regs
+      
+      meanLogFC_v1 <- sapply(all_regs, function(reg) {
+        g2t_tad_id <- g2t_DT$entrezID[g2t_DT$region==reg]
+        de_tad_id <- names(geneList)[geneList %in% g2t_tad_id]
+        stopifnot(de_tad_id %in% de_DT$genes)
+        mean(de_DT$logFC[de_DT$genes %in% de_tad_id])
+      })    
+      names(meanLogFC_v1) <- all_regs
+      
+      stopifnot(names(tad_rD) == all_regs)
       stopifnot(names(tad_rD) == names(sdLogFC))
       stopifnot(names(tad_rD) == names(absMaxLogFC))
+      stopifnot(names(tad_rD) == names(meanLogFC_v1))
       data.frame(
         hicds = hicds,
         exprds = exprds,
-        region = names(tad_rD),
-        ratioDown = as.numeric(tad_rD),
-        maxAbsLogFC = as.numeric(absMaxLogFC),
-        sdLogFC = as.numeric(sdLogFC),
+        region = all_regs,
+        ratioDown = as.numeric(tad_rD[all_regs]),
+        meanCorr = as.numeric(tad_meanCorr[all_regs]),
+        meanLogFC = as.numeric(tad_logFC[all_regs]),
+        meanLogFC_v1 = as.numeric(tad_logFC[all_regs]),
+        maxAbsLogFC = as.numeric(absMaxLogFC[all_regs]),
+        sdLogFC = as.numeric(sdLogFC[all_regs]),
         stringsAsFactors = FALSE
       )
     } # end-foreach iterating exprds
@@ -180,7 +205,7 @@ if(buildData) {
         logFC_cut_off <- min(as.numeric(as.character(na.omit(names(logFC_FDR)[logFC_FDR <= cutoff_fdr]))))  # the smallest FC cut-off that leads to desired FDR; if not returns Inf
         meanCorr_cut_off <- min(as.numeric(as.character(na.omit(names(meanCorr_FDR)[meanCorr_FDR <= cutoff_fdr]))))
         stopifnot(names(tad_logFC) == names(tad_meanCorr))
-        signif_tads <- (tad_logFC >= logFC_cut_off & tad_meanCorr >= meanCorr_cut_off)
+        signif_tads <- ( abs(tad_logFC) >= logFC_cut_off & tad_meanCorr >= meanCorr_cut_off)
         stopifnot(names(signif_tads) == names(tad_meanCorr))
         stopifnot(names(signif_tads) == all_regs)
         data.frame(
@@ -305,11 +330,11 @@ if(buildData) {
   
 }
 
-### PLOT THE SIGNIF PVAL FEATURES
+### PLOT THE SIGNIF PVAL FEATURES => compare dist Pval signif. vs. not signif.
 
 all_dt_signifPval$adjCombPval <- ifelse(all_dt_signifPval$signif_pval, "signif.", "not signif.")
 all_dt_signifPval$thresh_pval_label <- paste0("P=", all_dt_signifPval$thresh_pval)
-all_vars <- c("ratioDown", "maxAbsLogFC", "sdLogFC")
+all_vars <- c("ratioDown", "meanCorr", "meanLogFC", "maxAbsLogFC", "sdLogFC")
 plot_var=all_vars[1]
 for(plot_var in all_vars) {
   outFile <- file.path(outFolder, paste0("allDS_signifPval_", plot_var, "_signif_vs_notsignif_density_lattice.", plotType))
@@ -317,7 +342,7 @@ for(plot_var in all_vars) {
   myplot <- densityplot( formula(paste0("~",plot_var, "| thresh_pval_label")), groups = adjCombPval, data = all_dt_signifPval, #auto.key = TRUE, 
               # par.strip.text=list(cex=1), # width of the strip bar
               par.strip.text = list(cex = 1, font = 4, col = "brown"),
-              layout = c(5, 5),
+              layout = c(length(unique(all_dt_signifPval$thresh_pval_label)), 1), # column,row
               scales=list(y=list(relation="free"),
                           x=list(relation="free")
               ),
@@ -328,11 +353,11 @@ for(plot_var in all_vars) {
   cat(paste0("... written: ", outFile, "\n"))
 }
 
-### PLOT THE SIGNIF FDR
+### PLOT THE SIGNIF FDR FEATURES => compare dist FDR signif. vs. not signif.
 
 all_dt_signifFDR$FDR <- ifelse(all_dt_signifFDR$signif_FDR, "signif.", "not signif.")
-all_dt_signifFDR$thresh_FDR_label <- paste0("FDR=", all_dt_signifPval$thresh_FDR)
-all_vars <- c("ratioDown", "maxAbsLogFC", "sdLogFC")
+all_dt_signifFDR$thresh_FDR_label <- paste0("FDR=", all_dt_signifFDR$thresh_FDR)
+all_vars <- c("ratioDown", "meanCorr", "meanLogFC", "maxAbsLogFC", "sdLogFC")
 plot_var=all_vars[1]
 for(plot_var in all_vars) {
   outFile <- file.path(outFolder, paste0("allDS_signifFDR_", plot_var, "_signif_vs_notsignif_density_lattice.", plotType))
@@ -340,7 +365,7 @@ for(plot_var in all_vars) {
   myplot <- densityplot( formula(paste0("~",plot_var, "| thresh_FDR_label")), groups = FDR, data = all_dt_signifFDR, #auto.key = TRUE, 
                          # par.strip.text=list(cex=1), # width of the strip bar
                          par.strip.text = list(cex = 1, font = 4, col = "brown"),
-                         layout = c(5, 5),
+                         layout = c(length(unique(all_dt_signifFDR$thresh_FDR_label)), 1), # column, row
                          scales=list(y=list(relation="free"),
                                      x=list(relation="free")
                          ),
@@ -350,6 +375,120 @@ for(plot_var in all_vars) {
   foo <- dev.off()
   cat(paste0("... written: ", outFile, "\n"))
 }
+
+### CMP SIGNIF INTERSECT NOT INTERSECT
+signifFDR_dt <- all_dt_signifFDR[all_dt_signifFDR$signif_FDR,]
+signifPval_dt <- all_dt_signifPval[all_dt_signifPval$signif_pval,]
+stopifnot(signifFDR_dt$FDR == "signif.")
+stopifnot(signifPval_dt$adjCombPval == "signif.")
+
+
+signif_FDR_pval_dt <- merge(signifFDR_dt, signifPval_dt, by = c("hicds", "exprds", "region"), all = TRUE)
+
+check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
+
+all_vars <- c("ratioDown", "meanCorr", "meanLogFC", "maxAbsLogFC", "sdLogFC")
+for(var in all_vars) {
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
+  signif_FDR_pval_dt[,paste0(var)] <- ifelse(is.na(signif_FDR_pval_dt[,paste0(var, ".x")]), signif_FDR_pval_dt[,paste0(var, ".y")], signif_FDR_pval_dt[,paste0(var, ".x")] )
+}
+check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
+for(var in all_vars) {
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var)])
+  signif_FDR_pval_dt[,paste0(var, ".x")] <- NULL
+  signif_FDR_pval_dt[,paste0(var, ".y")] <- NULL
+}
+stopifnot( !( is.na(signif_FDR_pval_dt$FDR) & is.na(signif_FDR_pval_dt$adjCombPval) ) ) # should never happen that the 2 are NA
+signif_FDR_pval_dt$signif_label <- ifelse( is.na(signif_FDR_pval_dt$FDR), "onlyPval",
+                                           ifelse( is.na(signif_FDR_pval_dt$adjCombPval), "onlyFDR", "both"))
+
+stopifnot(signif_FDR_pval_dt$FDR[signif_FDR_pval_dt$signif_label == "both"] == "signif.")
+stopifnot(signif_FDR_pval_dt$FDR[signif_FDR_pval_dt$signif_label == "onlyFDR"] == "signif.")
+stopifnot(signif_FDR_pval_dt$adjCombPval[signif_FDR_pval_dt$signif_label == "both"] == "signif.")
+stopifnot(signif_FDR_pval_dt$adjCombPval[signif_FDR_pval_dt$signif_label == "onlyPval"] == "signif.")
+
+signif_FDR_pval_dt <- signif_FDR_pval_dt[order(signif_FDR_pval_dt$thresh_FDR_label, signif_FDR_pval_dt$thresh_pval_label),]
+
+signif_FDR_pval_dt$both_label <- paste0(signif_FDR_pval_dt$thresh_FDR_label, ";", signif_FDR_pval_dt$thresh_pval_label )
+
+signif_FDR_pval_dt <- signif_FDR_pval_dt[! grepl("^NA", signif_FDR_pval_dt$both_label) & !grepl("NA$", signif_FDR_pval_dt$both_label), ]
+
+
+all_vars <- c("ratioDown", "meanCorr", "meanLogFC", "maxAbsLogFC", "sdLogFC")
+plot_var=all_vars[1]
+for(plot_var in all_vars) {
+  outFile <- file.path(outFolder, paste0("allDS_", plot_var, "_intersect_vs_only_signif_density_lattice.", plotType))
+  do.call(plotType, list(outFile, height=myHeight*7, width=myWidth*7))
+  myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE, 
+                         # par.strip.text=list(cex=1), # width of the strip bar
+                         par.strip.text = list(cex = 1, font = 4, col = "brown"),
+                         # layout = c(length(unique(signif_FDR_pval_dt$both_label))/4, 1), # column, row
+                         layout = c(5, 7), # column, row
+                         scales=list(y=list(relation="free"),
+                                     x=list(relation="free")
+                         ),
+                         auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
+                         main = paste0(plot_var))
+  print(myplot)
+  foo <- dev.off()
+  cat(paste0("... written: ", outFile, "\n"))
+}
+
+### CMP SIGNIF INTERSECT NOT INTERSECT
+signifFDR_dt <- all_dt_signifFDR
+signifPval_dt <- all_dt_signifPval
+
+signif_FDR_pval_dt <- merge(signifFDR_dt, signifPval_dt, by = c("hicds", "exprds", "region"), all = TRUE)
+
+check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
+
+all_vars <- c("ratioDown", "meanCorr", "meanLogFC", "maxAbsLogFC", "sdLogFC")
+for(var in all_vars) {
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
+  signif_FDR_pval_dt[,paste0(var)] <- ifelse(is.na(signif_FDR_pval_dt[,paste0(var, ".x")]), signif_FDR_pval_dt[,paste0(var, ".y")], signif_FDR_pval_dt[,paste0(var, ".x")] )
+}
+check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
+for(var in all_vars) {
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var)])
+  signif_FDR_pval_dt[,paste0(var, ".x")] <- NULL
+  signif_FDR_pval_dt[,paste0(var, ".y")] <- NULL
+}
+stopifnot( !( is.na(signif_FDR_pval_dt$FDR) & is.na(signif_FDR_pval_dt$adjCombPval) ) ) # should never happen that the 2 are NA
+signif_FDR_pval_dt$signif_label <- ifelse( ! is.na(signif_FDR_pval_dt$FDR) & ! is.na(signif_FDR_pval_dt$adjCombPval), "bothSignif.",
+                                              ifelse( is.na(signif_FDR_pval_dt$FDR) & is.na(signif_FDR_pval_dt$adjCombPval), "noneSignif.", 
+                                                ifelse(! is.na(signif_FDR_pval_dt$FDR) , "FDRsignif.", 
+                                                       ifelse(! is.na(signif_FDR_pval_dt$adjCombPval) , "adjCombPvalSsignif.", NA))))
+stopifnot(!is.na(signif_FDR_pval_dt$signif_label))
+                                           
+
+signif_FDR_pval_dt <- signif_FDR_pval_dt[order(signif_FDR_pval_dt$thresh_FDR_label, signif_FDR_pval_dt$thresh_pval_label),]
+
+signif_FDR_pval_dt$both_label <- paste0(signif_FDR_pval_dt$thresh_FDR_label, ";", signif_FDR_pval_dt$thresh_pval_label )
+
+
+all_vars <- c("ratioDown", "meanCorr", "meanLogFC", "maxAbsLogFC", "sdLogFC")
+plot_var=all_vars[1]
+for(plot_var in all_vars) {
+  outFile <- file.path(outFolder, paste0("allDS_", plot_var, "_signif_by_thresh_density_lattice.", plotType))
+  do.call(plotType, list(outFile, height=myHeight*7, width=myWidth*7))
+  myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE, 
+                         # par.strip.text=list(cex=1), # width of the strip bar
+                         par.strip.text = list(cex = 1, font = 4, col = "brown"),
+                         # layout = c(length(unique(signif_FDR_pval_dt$both_label))/4, 1), # column, row
+                         layout = c(5, 7), # column, row
+                         scales=list(y=list(relation="free"),
+                                     x=list(relation="free")
+                         ),
+                         auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
+                         main = paste0(plot_var))
+  print(myplot)
+  foo <- dev.off()
+  cat(paste0("... written: ", outFile, "\n"))
+}
+
+
 
 ##############################
 cat("***** DONE: ", script_name, "\n")

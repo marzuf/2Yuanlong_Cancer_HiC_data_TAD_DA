@@ -14,8 +14,8 @@ cat("> START ", script_name, "\n")
 
 SSHFS <- FALSE
 
-buildData <- FALSE
-separateHeatmap <- FALSE
+buildData <- TRUE
+separateHeatmap <- TRUE
 
 require(foreach)
 require(doMC)
@@ -143,7 +143,7 @@ if(buildData) {
       names(adjCombPval_signifTADs) <- paste0(pvalThresh_seq)
       
       # RETRIEVE FDR DATA FOR LOGFC
-      # for each of the FDR threshold -> get FC cut-off and meanCorr cut-off => signif TADs those with FC >= cut-off & meanCorr >= cut-off
+      # for each of the FDR threshold -> get FC cut-off and meanCorr cut-off => signif TADs those with abs(logFC) >= cut-off & meanCorr >= cut-off
       logFC_FDR_file <- file.path(pipOutFolder, hicds, exprds, script19_name, "empFDR_list.Rdata")
       stopifnot(file.exists(logFC_FDR_file))
       all_FDR <- eval(parse(text = load(logFC_FDR_file)))
@@ -165,7 +165,7 @@ if(buildData) {
         logFC_cut_off <- min(as.numeric(as.character(na.omit(names(logFC_FDR)[logFC_FDR <= cutoff_fdr]))))  # the smallest FC cut-off that leads to desired FDR; if not returns Inf
         meanCorr_cut_off <- min(as.numeric(as.character(na.omit(names(meanCorr_FDR)[meanCorr_FDR <= cutoff_fdr]))))
         stopifnot(names(tad_logFC) == names(tad_meanCorr))
-        names(tad_logFC)[tad_logFC >= logFC_cut_off & tad_meanCorr >= meanCorr_cut_off]
+        names(tad_logFC)[ abs(tad_logFC) >= logFC_cut_off & tad_meanCorr >= meanCorr_cut_off]
       })
       names(FDR_signifTADs) <- paste0(FDRthresh_seq)
       
