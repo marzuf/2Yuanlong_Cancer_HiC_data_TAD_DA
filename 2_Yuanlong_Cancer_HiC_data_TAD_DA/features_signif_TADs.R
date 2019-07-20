@@ -157,7 +157,7 @@ if(buildData) {
       
       
       ### RETRIEVE THE TAD POSITIONS
-      tadposFile <- file.path(pipfolder, hicds, "genes2tad", "all_assigned_regions.txt")
+      tadposFile <- file.path(pipFolder, hicds, "genes2tad", "all_assigned_regions.txt")
       stopifnot(file.exists(tadposFile))
       tadpos_DT <- read.delim(tadposFile, header=F, col.names=c("chromo", "region", "start", "end"), stringsAsFactors = FALSE)
       stopifnot(is.numeric(tadpos_DT$start))

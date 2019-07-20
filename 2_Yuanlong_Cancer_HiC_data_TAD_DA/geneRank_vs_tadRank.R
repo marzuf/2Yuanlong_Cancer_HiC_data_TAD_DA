@@ -157,7 +157,9 @@ if(buildData) {
   all_gene_tad_rank_dt <- eval(parse(text = load(outFile)))
 }
 
-nDS <- length(unique(paste0( all_gene_tad_rank_dt$hicds, all_gene_tad_rank_dt$exprds )))
+all_gene_tad_rank_dt$dataset <- paste0( all_gene_tad_rank_dt$hicds, " - ", all_gene_tad_rank_dt$exprds)
+all_datasets <- unique(all_gene_tad_rank_dt$dataset) 
+nDS <- length(unique( all_datasets ))
 
 x_var = "TAD_rank"
 y_var = "gene_rank"
@@ -174,7 +176,7 @@ densplot(
   ylab = paste0(gsub("_", " " , y_var)),
   main = paste0(y_var, " vs. ", x_var)
 )
-mtext(side=3, text = paste0("all DS (n=", nDS,")",  " - ", samp_type), font=3)
+mtext(side=3, text = paste0(nDS, " DS (n=", nrow(all_gene_tad_rank_dt),")",  " - ", samp_type), font=3)
 curve(1*x, add=TRUE, lty=2, col="black", lwd=1.5)
 addCorr(
   x = myx, y = myy,
@@ -182,6 +184,32 @@ addCorr(
 )
 foo <- dev.off()
 cat(paste0("... written: ", outFile, "\n"))
+
+for(ds in all_datasets) {
+  sub_dt <- all_gene_tad_rank_dt[all_gene_tad_rank_dt$dataset == ds,]
+  myx <- sub_dt[,paste0(x_var)]
+  myy <- sub_dt[,paste0(y_var)]
+  outFile <- file.path(outFolder, paste0(gsub(" - ", "_", ds), "_", "geneRank", "_vs_", "tadRank", ".", plotType))
+  do.call(plotType, list(outFile, height=myHeight, width=myWidth))
+  densplot(
+    x = myx,
+    y = myy,
+    cex.axis = axisCex,
+    cex.lab = axisCex,
+    xlab = paste0(gsub("_", " ", x_var)),
+    ylab = paste0(gsub("_", " " , y_var)),
+    main = paste0(y_var, " vs. ", x_var)
+  )
+  mtext(side=3, text = paste0(ds, " (n=", nrow(sub_dt),")",  " - ", samp_type), font=3)
+  curve(1*x, add=TRUE, lty=2, col="black", lwd=1.5)
+  addCorr(
+    x = myx, y = myy,
+    legPos = "topleft", bty="n"
+  )
+  foo <- dev.off()
+  cat(paste0("... written: ", outFile, "\n"))
+}
+
 
 
 

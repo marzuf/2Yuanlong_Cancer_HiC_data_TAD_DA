@@ -1,3 +1,6 @@
+#############################################################################################################################
+############################################################################################################################# 
+#############################################################################################################################
 
 get_meanCorr_value <- function(exprMatrix, inside_genes, outside_genes, cormet) {
   stopifnot(inside_genes %in% rownames(exprMatrix))
@@ -36,6 +39,39 @@ get_meanCorr_value <- function(exprMatrix, inside_genes, outside_genes, cormet) 
   stopifnot(!is.na(meanCorr_value))
   return(meanCorr_value)
 }
+
+#############################################################################################################################
+############################################################################################################################# 
+#############################################################################################################################
+
+
+get_meanCorr_value_alternative <- function(exprMatrix, sample_genes, cormet) {
+  stopifnot(sample_genes %in% rownames(exprMatrix))
+
+  stopifnot(setequal(c(sample_genes), rownames(exprMatrix)))
+  
+  nAllGenes <- length(sample_genes)
+  
+  coexprMatrix <- cor(t(exprMatrix), method = cormet)
+  stopifnot(dim(coexprMatrix) == nAllGenes)
+  
+  coexprMatrix[lower.tri(coexprMatrix, diag = TRUE)] <- NA   # because after I filter that 1 gene should be inside, and 1 gene should be outside -> can never happen to take the diag. value of coexpression
+  coexprMatrix <- na.omit(melt(coexprMatrix))
+  colnames(coexprMatrix)[1:2] <- c("Var1", "Var2")
+  stopifnot(colnames( coexprMatrix)[3] == "value" )
+  coexprMatrix$Var1 <- as.character(coexprMatrix$Var1)
+  coexprMatrix$Var2 <- as.character(coexprMatrix$Var2)
+  
+  stopifnot(coexprMatrix$Var1 %in% sample_genes & coexprMatrix$Var2 %in% sample_genes)
+  
+
+  stopifnot(nrow(coexprMatrix) == (length(sample_genes) * (length(sample_genes)-1) * 0.5 ))
+  
+  meanCorr_value <- mean(coexprMatrix$value)
+  stopifnot(!is.na(meanCorr_value))
+  return(meanCorr_value)
+}
+
 
 #############################################################################################################################
 #############################################################################################################################
