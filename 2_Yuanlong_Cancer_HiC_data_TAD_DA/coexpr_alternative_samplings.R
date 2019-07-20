@@ -2,6 +2,7 @@
 options(scipen=100)
 
 # Rscript coexpr_alternative_samplings.R 10
+# Rscript coexpr_alternative_samplings.R 1000
 
 script_name <- "coexpr_alternative_samplings.R"
 
@@ -22,13 +23,13 @@ registerDoMC(ifelse(SSHFS, 2, 90))
 source("utils_fct.R")
 
 
-nSampled =10
+nSampled =1000
 nSampled <- commandArgs(trailingOnly = TRUE)
 nSampled <- as.numeric(nSampled)
 stopifnot(!is.na(nSampled))
 
 
-outFolder <- file.path("COEXPR_ALTERNATIVE_SAMPLINGS")
+outFolder <- file.path("COEXPR_ALTERNATIVE_SAMPLINGS", nSampled)
 dir.create(outFolder, recursive=TRUE)
 
 inFold <- file.path("CREATE_SAMPLE_ALTERNATIVE", nSampled)

@@ -142,6 +142,9 @@ allDS_signifFDR_DT <- foreach(hicds = all_hicds, .combine='rbind') %dopar% {
     tad_logFC <- tad_logFC[names(tad_avgRank_sorted)]
     tad_meanCorr <- tad_meanCorr[names(tad_avgRank_sorted)]
     
+    plotDT <- data.frame(regions = names(tad_logFC), meanFC = tad_logFC, meanCorr = tad_meanCorr)
+    
+    
     # => SIGNIF TADs FOR THE DESIRED FDR THRESHOLD
     logFC_cut_off <- min(as.numeric(as.character(na.omit(names(logFC_FDR)[logFC_FDR <= FDRthresh]))))  # the smallest FC cut-off that leads to desired FDR; if not returns Inf
     meanCorr_cut_off <- min(as.numeric(as.character(na.omit(names(meanCorr_FDR)[meanCorr_FDR <= FDRthresh]))))
@@ -171,7 +174,6 @@ allDS_signifFDR_DT <- foreach(hicds = all_hicds, .combine='rbind') %dopar% {
       
       
       stopifnot(names(tad_logFC) == names(tad_meanCorr))
-      plotDT <- data.frame(regions = names(tad_logFC), meanFC = tad_logFC, meanCorr = tad_meanCorr)
       
       outFileSuffix <- file.path(outFolder, paste0(hicds, "_", exprds, "_meanCorr_vs_meanFC_FDRthresh", FDRthresh))
       
@@ -258,6 +260,7 @@ allDS_signifFDR_DT <- foreach(hicds = all_hicds, .combine='rbind') %dopar% {
       
       outFileSuffix <- file.path(outFolder, paste0(hicds, "_", exprds, "_meanCorr_vs_meanFC_pvalThresh", pvalThresh))
       
+
       plot_meanFC_meanCorr_signifTADs(
         dataDT=plotDT,
         var1 = "meanFC",

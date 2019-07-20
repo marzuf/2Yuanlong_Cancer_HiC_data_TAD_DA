@@ -1,4 +1,5 @@
 # Rscript create_sample_alternative.R 10
+# Rscript create_sample_alternative.R 1000
 
 # for each TAD => sample "n" random TADs on the same chromo (same number of adjacent genes)
 # => same as going on a chromo, for each TAD size sample nTAD_of_this_size * n
