@@ -3,6 +3,7 @@ options(scipen=100)
 # Rscript plot_signif_TADs.R <FDR_threshold> <p_value_threshold> <hicds> <exprds>
 # Rscript plot_signif_TADs.R <FDR_threshold> <p_value_threshold> # to run all datasets in one shot
 # Rscript plot_signif_TADs.R 0.1 0.01 K562_40kb TCGAlaml_wt_mutFLT3
+# Rscript plot_signif_TADs.R 0.2 0.01 
 
 script_name <- "plot_signif_TADs.R"
 
@@ -92,7 +93,7 @@ stopifnot(pvalThresh >= 0 & pvalThresh <=1 )
 hicds <- args[3]
 exprds <- args[4]
 
-if(length(args) == 0) {
+if(length(args) == 2) {
   all_hicds <- list.files(pipOutFolder)
   all_exprds <- sapply(all_hicds, function(x) list.files(file.path(pipOutFolder, x)))
 } else{

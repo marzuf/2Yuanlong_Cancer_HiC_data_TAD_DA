@@ -88,7 +88,7 @@ if(length(args) == 0) {
 
 
 if(buildData) {
-
+  
   ### BUILD RATIO DOWN
   cat("... start building ratiodown and FC \n")
   allDS_rD_FC_DT <- foreach(hicds = all_hicds, .combine='rbind') %dopar% {
@@ -249,7 +249,7 @@ if(buildData) {
           stringsAsFactors = FALSE
         )
       } # end-foreach iterating over FDR threshs
-    signif_tads_dt
+      signif_tads_dt
     } # end-foreach iterating over exprds
     exprds_signifFDR_DT
   } # end-foreach iterating over hicds
@@ -378,14 +378,14 @@ for(plot_var in all_vars) {
   outFile <- file.path(outFolder, paste0("allDS_signifPval_", plot_var, "_signif_vs_notsignif_density_lattice.", plotType))
   do.call(plotType, list(outFile, height=myHeight, width=myWidth*3))
   myplot <- densityplot( formula(paste0("~",plot_var, "| thresh_pval_label")), groups = adjCombPval, data = all_dt_signifPval, #auto.key = TRUE,
-              # par.strip.text=list(cex=1), # width of the strip bar
-              par.strip.text = list(cex = 1, font = 4, col = "brown"),
-              layout = c(length(unique(all_dt_signifPval$thresh_pval_label)), 1), # column,row
-              scales=list(y=list(relation="free"),
-                          x=list(relation="free")
-              ),
-              auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(all_dt_signifPval$adjCombPval))),
-              main = paste0(plot_var))
+                         # par.strip.text=list(cex=1), # width of the strip bar
+                         par.strip.text = list(cex = 1, font = 4, col = "brown"),
+                         layout = c(length(unique(all_dt_signifPval$thresh_pval_label)), 1), # column,row
+                         scales=list(y=list(relation="free"),
+                                     x=list(relation="free")
+                         ),
+                         auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(all_dt_signifPval$adjCombPval))),
+                         main = paste0(plot_var))
   print(myplot)
   foo <- dev.off()
   cat(paste0("... written: ", outFile, "\n"))
@@ -411,94 +411,94 @@ for(plot_var in all_vars) {
 }
 
 ### CMP SIGNIF INTERSECT NOT INTERSECT
-  signifFDR_dt <- all_dt_signifFDR[all_dt_signifFDR$signif_FDR,]
-  signifPval_dt <- all_dt_signifPval[all_dt_signifPval$signif_pval,]
-  stopifnot(signifFDR_dt$FDR == "signif.")
-  stopifnot(signifPval_dt$adjCombPval == "signif.")
+signifFDR_dt <- all_dt_signifFDR[all_dt_signifFDR$signif_FDR,]
+signifPval_dt <- all_dt_signifPval[all_dt_signifPval$signif_pval,]
+stopifnot(signifFDR_dt$FDR == "signif.")
+stopifnot(signifPval_dt$adjCombPval == "signif.")
 
 
-  signif_FDR_pval_dt <- merge(signifFDR_dt, signifPval_dt, by = c("hicds", "exprds", "region"), all = TRUE)
+signif_FDR_pval_dt <- merge(signifFDR_dt, signifPval_dt, by = c("hicds", "exprds", "region"), all = TRUE)
 
-  check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
+check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
 
-  for(var in all_vars) {
-    stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
-    signif_FDR_pval_dt[,paste0(var)] <- ifelse(is.na(signif_FDR_pval_dt[,paste0(var, ".x")]), signif_FDR_pval_dt[,paste0(var, ".y")], signif_FDR_pval_dt[,paste0(var, ".x")] )
-  }
-  check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
-  for(var in all_vars) {
-    stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
-    stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var)])
-    signif_FDR_pval_dt[,paste0(var, ".x")] <- NULL
-    signif_FDR_pval_dt[,paste0(var, ".y")] <- NULL
-  }
-  stopifnot( !( is.na(signif_FDR_pval_dt$FDR) & is.na(signif_FDR_pval_dt$adjCombPval) ) ) # should never happen that the 2 are NA
-  signif_FDR_pval_dt$signif_label <- ifelse( is.na(signif_FDR_pval_dt$FDR), "onlyPval",
-                                             ifelse( is.na(signif_FDR_pval_dt$adjCombPval), "onlyFDR", "both"))
+for(var in all_vars) {
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
+  signif_FDR_pval_dt[,paste0(var)] <- ifelse(is.na(signif_FDR_pval_dt[,paste0(var, ".x")]), signif_FDR_pval_dt[,paste0(var, ".y")], signif_FDR_pval_dt[,paste0(var, ".x")] )
+}
+check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
+for(var in all_vars) {
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var)])
+  signif_FDR_pval_dt[,paste0(var, ".x")] <- NULL
+  signif_FDR_pval_dt[,paste0(var, ".y")] <- NULL
+}
+stopifnot( !( is.na(signif_FDR_pval_dt$FDR) & is.na(signif_FDR_pval_dt$adjCombPval) ) ) # should never happen that the 2 are NA
+signif_FDR_pval_dt$signif_label <- ifelse( is.na(signif_FDR_pval_dt$FDR), "onlyPval",
+                                           ifelse( is.na(signif_FDR_pval_dt$adjCombPval), "onlyFDR", "both"))
 
-  stopifnot(signif_FDR_pval_dt$FDR[signif_FDR_pval_dt$signif_label == "both"] == "signif.")
-  stopifnot(signif_FDR_pval_dt$FDR[signif_FDR_pval_dt$signif_label == "onlyFDR"] == "signif.")
-  stopifnot(signif_FDR_pval_dt$adjCombPval[signif_FDR_pval_dt$signif_label == "both"] == "signif.")
-  stopifnot(signif_FDR_pval_dt$adjCombPval[signif_FDR_pval_dt$signif_label == "onlyPval"] == "signif.")
+stopifnot(signif_FDR_pval_dt$FDR[signif_FDR_pval_dt$signif_label == "both"] == "signif.")
+stopifnot(signif_FDR_pval_dt$FDR[signif_FDR_pval_dt$signif_label == "onlyFDR"] == "signif.")
+stopifnot(signif_FDR_pval_dt$adjCombPval[signif_FDR_pval_dt$signif_label == "both"] == "signif.")
+stopifnot(signif_FDR_pval_dt$adjCombPval[signif_FDR_pval_dt$signif_label == "onlyPval"] == "signif.")
 
-  # signif_FDR_pval_dt <- signif_FDR_pval_dt[order(signif_FDR_pval_dt$thresh_FDR_label, signif_FDR_pval_dt$thresh_pval_label),]
-  # signif_FDR_pval_dt$both_label <- paste0(signif_FDR_pval_dt$thresh_FDR_label, ";", signif_FDR_pval_dt$thresh_pval_label )
-  signif_FDR_pval_dt <- signif_FDR_pval_dt[order(signif_FDR_pval_dt$thresh_pval_label, signif_FDR_pval_dt$thresh_FDR_label),]
-  signif_FDR_pval_dt$both_label <- paste0(signif_FDR_pval_dt$thresh_pval_label, ";",  signif_FDR_pval_dt$thresh_FDR_label)
+# signif_FDR_pval_dt <- signif_FDR_pval_dt[order(signif_FDR_pval_dt$thresh_FDR_label, signif_FDR_pval_dt$thresh_pval_label),]
+# signif_FDR_pval_dt$both_label <- paste0(signif_FDR_pval_dt$thresh_FDR_label, ";", signif_FDR_pval_dt$thresh_pval_label )
+signif_FDR_pval_dt <- signif_FDR_pval_dt[order(signif_FDR_pval_dt$thresh_pval_label, signif_FDR_pval_dt$thresh_FDR_label),]
+signif_FDR_pval_dt$both_label <- paste0(signif_FDR_pval_dt$thresh_pval_label, ";",  signif_FDR_pval_dt$thresh_FDR_label)
 
-  signif_FDR_pval_dt <- signif_FDR_pval_dt[! grepl("^NA", signif_FDR_pval_dt$both_label) & !grepl("NA$", signif_FDR_pval_dt$both_label), ]
+signif_FDR_pval_dt <- signif_FDR_pval_dt[! grepl("^NA", signif_FDR_pval_dt$both_label) & !grepl("NA$", signif_FDR_pval_dt$both_label), ]
 
 
 
-  nCases <- length(unique(signif_FDR_pval_dt$both_label))
-  nCol <- 5
-  nRow <- ceiling(nCases/nCol)
+nCases <- length(unique(signif_FDR_pval_dt$both_label))
+nCol <- 5
+nRow <- ceiling(nCases/nCol)
 
-  groupCols <- trellis.par.get("superpose.line")$col[1:length(unique(signif_FDR_pval_dt$signif_label))]
-  names(groupCols) <- levels(as.factor(signif_FDR_pval_dt$signif_label))
+groupCols <- trellis.par.get("superpose.line")$col[1:length(unique(signif_FDR_pval_dt$signif_label))]
+names(groupCols) <- levels(as.factor(signif_FDR_pval_dt$signif_label))
+
+
+plot_var=all_vars[1]
+for(plot_var in all_vars) {
+  outFile <- file.path(outFolder, paste0("allDS_", plot_var, "_intersect_vs_only_signif_density_lattice.", plotType))
+  do.call(plotType, list(outFile, height=myHeight*nRow, width=myWidth*nCol))
+  # myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE,
+  #                        # par.strip.text=list(cex=1), # width of the strip bar
+  #                        par.strip.text = list(cex = 1, font = 4, col = "brown"),
+  #                        # layout = c(length(unique(signif_FDR_pval_dt$both_label))/4, 1), # column, row
+  #                        layout = c(nCol, nRow), # column, row
+  #                        scales=list(y=list(relation="free"),
+  #                                    x=list(relation="free")
+  #                        ),
+  #                        auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
+  #                        main = paste0(plot_var))
   
-
-  plot_var=all_vars[1]
-  for(plot_var in all_vars) {
-    outFile <- file.path(outFolder, paste0("allDS_", plot_var, "_intersect_vs_only_signif_density_lattice.", plotType))
-    do.call(plotType, list(outFile, height=myHeight*nRow, width=myWidth*nCol))
-    # myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE,
-    #                        # par.strip.text=list(cex=1), # width of the strip bar
-    #                        par.strip.text = list(cex = 1, font = 4, col = "brown"),
-    #                        # layout = c(length(unique(signif_FDR_pval_dt$both_label))/4, 1), # column, row
-    #                        layout = c(nCol, nRow), # column, row
-    #                        scales=list(y=list(relation="free"),
-    #                                    x=list(relation="free")
-    #                        ),
-    #                        auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
-    #                        main = paste0(plot_var))
-    
-    
-    myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE, 
-                           par.strip.text = list(cex = 1, font = 4, col = "brown"),
-                           layout = c(nCol, nRow), # column, row
-                           scales=list(y=list(relation="free"),
-                                       x=list(relation="free")
-                           ),
-                           panel = function(x,groups,subscripts, ...) {
-                             panel.densityplot(x,groups=groups, subscripts=subscripts)
-                             obs_nbr <-  as.numeric(table(groups[subscripts]))
-                             obs_cols <- groupCols[names(table(groups[subscripts]))]
-                             draw.key(key = list(text = list(#as.character(length(x)), 
-                               paste0("n=", as.character(obs_nbr))), col= obs_cols), 
-                               draw=TRUE,  
-                               vp=viewport(x=0.9,y=0.9))
-                           },
-                           auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
-                           main = paste0(plot_var))
-    
-    
-
-    
-    print(myplot)
-    foo <- dev.off()
-    cat(paste0("... written: ", outFile, "\n"))
-  }
+  
+  myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE, 
+                         par.strip.text = list(cex = 1, font = 4, col = "brown"),
+                         layout = c(nCol, nRow), # column, row
+                         scales=list(y=list(relation="free"),
+                                     x=list(relation="free")
+                         ),
+                         panel = function(x,groups,subscripts, ...) {
+                           panel.densityplot(x,groups=groups, subscripts=subscripts)
+                           obs_nbr <-  as.numeric(table(groups[subscripts]))
+                           obs_cols <- groupCols[names(table(groups[subscripts]))]
+                           draw.key(key = list(text = list(#as.character(length(x)), 
+                             paste0("n=", as.character(obs_nbr))), col= obs_cols), 
+                             draw=TRUE,  
+                             vp=viewport(x=0.9,y=0.9))
+                         },
+                         auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
+                         main = paste0(plot_var))
+  
+  
+  
+  
+  print(myplot)
+  foo <- dev.off()
+  cat(paste0("... written: ", outFile, "\n"))
+}
 
 ### CMP SIGNIF INTERSECT NOT INTERSECT
 signifFDR_dt <- all_dt_signifFDR
@@ -522,14 +522,14 @@ for(var in all_vars) {
 }
 stopifnot( !( is.na(signif_FDR_pval_dt$FDR) & is.na(signif_FDR_pval_dt$adjCombPval) ) ) # should never happen that the 2 are NA
 signif_FDR_pval_dt$signif_label <- ifelse( signif_FDR_pval_dt$signif_FDR & signif_FDR_pval_dt$signif_pval, "bothSignif.",
-                                              ifelse( ! signif_FDR_pval_dt$signif_FDR & ! signif_FDR_pval_dt$signif_pval, "noneSignif.", 
-                                                ifelse( signif_FDR_pval_dt$signif_FDR , "FDRsignif.", 
-                                                       ifelse( signif_FDR_pval_dt$signif_pval , "adjCombPvalSsignif.", NA))))
+                                           ifelse( ! signif_FDR_pval_dt$signif_FDR & ! signif_FDR_pval_dt$signif_pval, "noneSignif.", 
+                                                   ifelse( signif_FDR_pval_dt$signif_FDR , "FDRsignif.", 
+                                                           ifelse( signif_FDR_pval_dt$signif_pval , "adjCombPvalSsignif.", NA))))
 stopifnot(!is.na(signif_FDR_pval_dt$signif_label))
-                               
+
 signif_FDR_pval_dt$signif_label <- factor(as.character(signif_FDR_pval_dt$signif_label),
                                           levels = c("bothSignif.","FDRsignif.", "adjCombPvalSsignif.", "noneSignif." ))
-            
+
 
 # signif_FDR_pval_dt <- signif_FDR_pval_dt[order(signif_FDR_pval_dt$thresh_FDR_label, signif_FDR_pval_dt$thresh_pval_label),]
 # signif_FDR_pval_dt$both_label <- paste0(signif_FDR_pval_dt$thresh_FDR_label, ";", signif_FDR_pval_dt$thresh_pval_label )
@@ -572,43 +572,43 @@ plot_var=all_vars[1]
 for(plot_var in all_vars) {
   outFile <- file.path(outFolder, paste0("allDS_", plot_var, "_signif_by_thresh_density_lattice.", plotType))
   do.call(plotType, list(outFile, height=myHeight*nRow, width=myWidth*nCol))
-
+  
   myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE, 
-               # color=c("red","blue","green", "yellow"),
-               # par.strip.text=list(cex=1), # width of the strip bar
-               par.strip.text = list(cex = 1, font = 4, col = "brown"),
-               # layout = c(length(unique(signif_FDR_pval_dt$both_label))/4, 1), # column, row
-               layout = c(nCol, nRow), # column, row
-               scales=list(y=list(relation="free"),
-                           x=list(relation="free")
-               ),
-               # str(trellis.par.get(), max.level = 1)
-               # str(trellis.par.get("superpose.line"))
-               # par.settings = list(superpose.line = list(  col = c("orange", "blue", "red", "yellow"))),
-               panel = function(x,groups,subscripts, ...) {
-                 panel.densityplot(x,groups=groups, subscripts=subscripts)
-                 # foreach panel, groups=the name of the category; subscripts=the index of x corresponding to this panel
-                 # cat("groups=", groups, "\n")
-                 # cat("subscripts=", subscripts, "\n")
-                 # xx <- setNames(as.numeric(table(groups[subscripts])), names(table(groups[subscripts]), "\, "\)
-                 # cat("tablepaste:", paste0(names(table(groups[subscripts])),"=", as.numeric(table(groups[subscripts])), "\n"))
-                 # cat("cols:", paste0(groupCols[names(table(groups[subscripts]))],"\n"))
-                 obs_nbr <-  as.numeric(table(groups[subscripts]))
-                 obs_cols <- groupCols[names(table(groups[subscripts]))]
-                 # cat("table: ", table(groups[subscripts]), "\n")
-                 # n_ind <- tapply(x, groups[subscripts], length) # similar to table
-                 # 
-                 # draw.key(key = list(text = list(as.character(length(x)), 
-                 #                                 as.character(levels(groups)))), draw=TRUE,  vp=viewport(x=0.25,y=0.9))
-                 # 
-                 draw.key(key = list(text = list(#as.character(length(x)), 
-                                                 # paste0("n=", as.character(n_ind))), col= groupCols), 
-                          paste0("n=", as.character(obs_nbr))), col= obs_cols), 
-                                            draw=TRUE,  
-                                            vp=viewport(x=0.9,y=0.9))
-               },
-               auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
-               main = paste0(plot_var))
+                         # color=c("red","blue","green", "yellow"),
+                         # par.strip.text=list(cex=1), # width of the strip bar
+                         par.strip.text = list(cex = 1, font = 4, col = "brown"),
+                         # layout = c(length(unique(signif_FDR_pval_dt$both_label))/4, 1), # column, row
+                         layout = c(nCol, nRow), # column, row
+                         scales=list(y=list(relation="free"),
+                                     x=list(relation="free")
+                         ),
+                         # str(trellis.par.get(), max.level = 1)
+                         # str(trellis.par.get("superpose.line"))
+                         # par.settings = list(superpose.line = list(  col = c("orange", "blue", "red", "yellow"))),
+                         panel = function(x,groups,subscripts, ...) {
+                           panel.densityplot(x,groups=groups, subscripts=subscripts)
+                           # foreach panel, groups=the name of the category; subscripts=the index of x corresponding to this panel
+                           # cat("groups=", groups, "\n")
+                           # cat("subscripts=", subscripts, "\n")
+                           # xx <- setNames(as.numeric(table(groups[subscripts])), names(table(groups[subscripts]), "\, "\)
+                           # cat("tablepaste:", paste0(names(table(groups[subscripts])),"=", as.numeric(table(groups[subscripts])), "\n"))
+                           # cat("cols:", paste0(groupCols[names(table(groups[subscripts]))],"\n"))
+                           obs_nbr <-  as.numeric(table(groups[subscripts]))
+                           obs_cols <- groupCols[names(table(groups[subscripts]))]
+                           # cat("table: ", table(groups[subscripts]), "\n")
+                           # n_ind <- tapply(x, groups[subscripts], length) # similar to table
+                           # 
+                           # draw.key(key = list(text = list(as.character(length(x)), 
+                           #                                 as.character(levels(groups)))), draw=TRUE,  vp=viewport(x=0.25,y=0.9))
+                           # 
+                           draw.key(key = list(text = list(#as.character(length(x)), 
+                             # paste0("n=", as.character(n_ind))), col= groupCols), 
+                             paste0("n=", as.character(obs_nbr))), col= obs_cols), 
+                             draw=TRUE,  
+                             vp=viewport(x=0.9,y=0.9))
+                         },
+                         auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
+                         main = paste0(plot_var))
   
   print(myplot)
   foo <- dev.off()

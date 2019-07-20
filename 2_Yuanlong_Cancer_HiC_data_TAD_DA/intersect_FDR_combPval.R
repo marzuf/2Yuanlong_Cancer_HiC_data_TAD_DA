@@ -15,15 +15,16 @@ cat("> START ", script_name, "\n")
 SSHFS <- FALSE
 
 buildData <- TRUE
-separateHeatmap <- TRUE
+separateHeatmap <- FALSE
 
 require(foreach)
 require(doMC)
 registerDoMC(ifelse(SSHFS, 2, 40))
 require(ggplot2)
 require(reshape2)
-require(metap)
+
 require(lattice)
+require(grid)
 require(RColorBrewer)
 hm.palette <- colorRampPalette(rev(brewer.pal(9, 'YlOrRd')), space='Lab')
 
@@ -415,6 +416,9 @@ colnames(melt_lattice_dt) [colnames(melt_lattice_dt) == "value"] <- "nSignifTADs
 melt_lattice_dt$variable <- gsub("_nSignifTADs", "", melt_lattice_dt$variable)
 
 
+groupCols <- trellis.par.get("superpose.line")$col[1:length(unique(melt_lattice_dt$variable))]
+names(groupCols) <- levels(as.factor(melt_lattice_dt$variable))
+
 outFile <- file.path(outFolder, paste0("allDS_nSignifTADs_density_lattice.", plotType))
 do.call(plotType, list(outFile, height=myHeight*3, width=myWidth*3))
 
@@ -425,12 +429,51 @@ densityplot(~nSignifTADs |thresholdComb_label, groups  = variable,data = melt_la
             scales=list(y=list(relation="free"),
                         x=list(relation="free")
                         ),
+            panel = function(x,groups,subscripts, ...) {
+              panel.densityplot(x,groups=groups, subscripts=subscripts)
+              obs_nbr <-  as.numeric(table(groups[subscripts]))
+              obs_cols <- groupCols[names(table(groups[subscripts]))]
+              draw.key(key = list(text = list(
+                paste0("n=", as.character(obs_nbr))), col= obs_cols), 
+                draw=TRUE,  
+                vp=viewport(x=0.9,y=0.9))
+            },
             auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(melt_lattice_dt$variable))),
             main = paste0("# signif. TADs"))
 
 foo <- dev.off()
 cat(paste0("... written: ", outFile, "\n"))
 
+
+
+
+
+                       
+
+
+# which are the top ranking FCC AUC datasets
+# load("../Yuanlong_Cancer_HiC_data_TAD_DA/EXPR_VARIANCE/LOG2FPKM/aucFCC.Rdata")
+# head(sort(aucFCC, decreasing = TRUE),10)
+# ENCSR312KHQ_SK-MEL-5_40kb_TCGAskcm_wt_mutCTNNB1 ***
+# 1.471168 
+# ENCSR862OGI_RPMI-7951_40kb_TCGAskcm_wt_mutCTNNB1 
+# 1.463047 
+# ENCSR444WCZ_A549_40kb_TCGAluad_mutKRAS_mutEGFR ***
+# 1.450056 
+# ENCSR862OGI_RPMI-7951_40kb_TCGAskcm_wt_mutBRAF 
+# 1.443286 
+# ENCSR489OCU_NCI-H460_40kb_TCGAluad_mutKRAS_mutEGFR 
+# 1.437669 
+# ENCSR312KHQ_SK-MEL-5_40kb_TCGAskcm_wt_mutBRAF 
+# 1.424054 
+# ENCSR079VIJ_G401_40kb_TCGAkich_norm_kich ***
+# 1.420483 
+# ENCSR401TBQ_Caki2_40kb_TCGAkich_norm_kich 
+# 1.417405 
+# GSE75070_MCF-7_shNS_40kb_TCGAbrca_lum_bas 
+# 1.403271 
+# ENCSR444WCZ_A549_40kb_TCGAluad_wt_mutKRAS 
+# 1.400265 
 
 
 ##############################
