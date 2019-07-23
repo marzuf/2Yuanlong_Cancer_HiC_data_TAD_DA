@@ -54,7 +54,7 @@ if(length(args) == 0) {
   all_exprds <- setNames(exprds, hicds)
 }
 
-outFolder <- "MEANCORR_MEANFC_FDR_BYCMPTYPE"
+outFolder <- "MEANCORR_MEANFC_BYCMPTYPE"
 dir.create(outFolder, recursive=TRUE)
 
 buildTable <- TRUE
@@ -188,7 +188,7 @@ plot(
   pch=16,
   cex=0.7
 )
-addSubtypeLeg(mypos="bottomright")
+addSubtypeLeg(mypos="bottomright", bty="n")
 mtext(side=3, text = paste0(nDS, " DS (n=", nrow(all_data_dt),")"), font=3)
 foo <- dev.off()
 cat(paste0("... written: ", outFile, "\n"))

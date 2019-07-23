@@ -347,8 +347,7 @@ for(curr_var in all_x) {
   
   
   boxplot(formula(paste0(curr_var, "~", "geneSignif")), data = all_gene_tad_expr_dt, 
-          main = paste0(gsub("_log10", "", curr_var), "(signif./not signif.)"),
-          ylab =paste0(gsub("_log10", "", curr_var), " [log10]"),
+          ylab =curr_var,
           xlab="gene signif.")
 
   foo <- dev.off()
@@ -372,8 +371,7 @@ for(curr_var in all_x) {
     x=-log10(tad_agg_dt[,"TAD_adjCombPval"]),
     y=log10(tad_agg_dt[, newColName]),
     xlab = paste0("TAD_adjCombPval", " [-log10]"),
-    ylab = paste0(newColName, " [log10]"),
-    main = paste0(gsub("_log10", "", curr_var), " vs. ", "TAD adj. comb. pval.")
+    ylab = paste0(newColName, " [log10]")
   )
   foo <- dev.off()
   cat(paste0("... written: ", outFile, "\n"))
@@ -389,4 +387,3 @@ for(curr_var in all_x) {
 ##############################
 cat("***** DONE: ", script_name, "\n")
 cat(paste0(startTime, "\n", Sys.time(), "\n"))
-

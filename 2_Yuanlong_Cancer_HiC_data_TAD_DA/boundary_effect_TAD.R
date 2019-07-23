@@ -135,7 +135,12 @@ if(buildData) {
   all_corr_tad_dt <- eval(parse(text = load(outFile)))
 }
 
+all_corr_tad_dt <- all_corr_tad_dt[all_corr_tad_dt$obs_meanCorr > 0 & all_corr_tad_dt$around_meanCorr > 0,]
+
 all_corr_tad_dt$corrRatio <- all_corr_tad_dt$obs_meanCorr/all_corr_tad_dt$around_meanCorr
+
+all_corr_tad_dt$corrRatio_log2 <- log2(all_corr_tad_dt$obs_meanCorr/all_corr_tad_dt$around_meanCorr)
+
 all_corr_tad_dt$tad_adjPvalComb_log10 <- -log10(all_corr_tad_dt$tad_adjPvalComb)
       
       
@@ -148,7 +153,7 @@ nDS <- length(unique( all_datasets ))
 ################################### PLOT EACH DATASET SEPARATELY
 ###################################
 x_var = "tad_adjPvalComb_log10"
-y_var = "corrRatio"
+y_var = "corrRatio_log2"
 
 foo <- foreach(ds = all_datasets) %dopar% {
   
@@ -164,7 +169,7 @@ foo <- foreach(ds = all_datasets) %dopar% {
     cex.axis = axisCex,
     cex.lab = axisCex,
     xlab = paste0(gsub("_", " ", gsub("_log10", "", x_var), " [-log10]")),
-    ylab = paste0(gsub("_", " " , y_var)),
+    ylab =  paste0(gsub("_", " " , gsub("_log2", "", y_var)), " [>0, log2]"),
     main = paste0(y_var, " vs. ", x_var)
   )
   mtext(side=3, text = paste0(ds, " (n=", nrow(sub_dt),")"), font=3)
@@ -180,7 +185,7 @@ foo <- foreach(ds = all_datasets) %dopar% {
 
       
 x_var = "tad_adjPvalComb_log10"
-y_var = "corrRatio"
+y_var = "corrRatio_log2"
 myx <- all_corr_tad_dt[,paste0(x_var)]
 myy <- all_corr_tad_dt[,paste0(y_var)]
 outFile <- file.path(outFolder, paste0(y_var, "_vs_", x_var, "_densplot.", plotType))
@@ -190,8 +195,8 @@ densplot(
   y = myy,
   cex.axis = axisCex,
   cex.lab = axisCex,
-  xlab = paste0(gsub("_", " ", gsub("_log10", "", x_var) , " [-log10]")),
-  ylab = paste0(gsub("_", " " , y_var)),
+  xlab = paste0(gsub("_", " ", gsub("_log10", "", x_var)) , " [-log10]"),
+  ylab = paste0(gsub("_", " " , gsub("_log2", "", y_var)), " [>0, log2]"),
   main = paste0(y_var, " vs. ", x_var)
 )
 mtext(side=3, text = paste0(nDS, " DS (n=", nrow(all_corr_tad_dt),")"), font=3)
@@ -200,7 +205,7 @@ cat(paste0("... written: ", outFile, "\n"))
 
 
 x_var = "tad_adjPvalComb_log10"
-y_var = "corrRatio"
+y_var = "corrRatio_log2"
 myx <- all_corr_tad_dt[,paste0(x_var)]
 myy <- all_corr_tad_dt[,paste0(y_var)]
 outFile <- file.path(outFolder, paste0(y_var, "_vs_", x_var, "_plotColType.", plotType))
@@ -210,14 +215,14 @@ plot(
   y = myy,
   cex.axis = axisCex,
   cex.lab = axisCex,
-  xlab = paste0(gsub("_", " ", gsub("_log10", "", x_var), " [-log10]")),
-  ylab = paste0(gsub("_", " " , y_var)),
+  xlab = paste0(gsub("_", " ", gsub("_log10", "", x_var)), " [-log10]"),
+  ylab = paste0(gsub("_", " " , gsub("_log2", "", y_var)), " [>0, log2]"),
   main = paste0(y_var, " vs. ", x_var),
   col = all_corr_tad_dt$subtype_col,
   pch=16,
   cex=0.7
 )
-addSubtypeLeg(mypos="bottomright")
+addSubtypeLeg(mypos="bottomright", bty="n")
 mtext(side=3, text = paste0(nDS, " DS (n=", nrow(all_corr_tad_dt),")"), font=3)
 foo <- dev.off()
 cat(paste0("... written: ", outFile, "\n"))

@@ -28,6 +28,7 @@ plotType <- "png"
 myHeight <- ifelse(plotType=="png", 400, 7)
 myWidth <- myHeight
 axisCex <- 1.4
+labCex <- 1.4
 
 tiesMeth <- "min"
 
@@ -196,7 +197,7 @@ foo <- foreach(exprds = dup_exprds, .combine='rbind') %dopar% {
         x = var1,
         y = var2,
         cex.axis = axisCex,
-        cex.lab = axisCex,
+        cex.lab = labCex,
         xlab = paste0(hicds1, "\n", plot_var), 
         ylab = paste0(hicds2, "\n", plot_var), 
         main = paste0(exprds),

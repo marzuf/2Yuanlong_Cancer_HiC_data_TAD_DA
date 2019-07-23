@@ -176,8 +176,8 @@ densplot(
   ylab = paste0(gsub("_", " " , y_var)),
   main = paste0(y_var, " vs. ", x_var)
 )
-mtext(side=3, text = paste0(nDS, " DS (n=", nrow(all_gene_tad_rank_dt),")",  " - ", samp_type), font=3)
-curve(1*x, add=TRUE, lty=2, col="black", lwd=1.5)
+mtext(side=3, text = paste0(nDS, " DS\n(n=", nrow(all_gene_tad_rank_dt),")",  " - ", samp_type), font=3)
+#curve(1*x, add=TRUE, lty=2, col="black", lwd=1.5)
 addCorr(
   x = myx, y = myy,
   legPos = "topleft", bty="n"
@@ -200,8 +200,8 @@ for(ds in all_datasets) {
     ylab = paste0(gsub("_", " " , y_var)),
     main = paste0(y_var, " vs. ", x_var)
   )
-  mtext(side=3, text = paste0(ds, " (n=", nrow(sub_dt),")",  " - ", samp_type), font=3)
-  curve(1*x, add=TRUE, lty=2, col="black", lwd=1.5)
+  mtext(side=3, text = paste0(ds, "\n(n=", nrow(sub_dt),")",  " - ", samp_type), font=3, line=-1)
+#  curve(1*x, add=TRUE, lty=2, col="black", lwd=1.5)
   addCorr(
     x = myx, y = myy,
     legPos = "topleft", bty="n"

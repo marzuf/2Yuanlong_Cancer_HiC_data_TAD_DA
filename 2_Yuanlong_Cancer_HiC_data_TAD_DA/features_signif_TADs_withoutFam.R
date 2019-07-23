@@ -6,7 +6,7 @@ options(scipen=100)
 hicds="K562_40kb"
 exprds="TCGAlaml_wt_mutFLT3"
 
-script_name <- "features_signif_TADs_withFam.R"
+script_name <- "features_signif_TADs.R"
 
 startTime <- Sys.time()
 
@@ -87,9 +87,6 @@ if(length(args) == 0) {
 }
 
 
-familyType <- "hgnc_entrezID"
-fam_type <- "hgnc_family_short"
-
 if(buildData) {
 
   ### BUILD RATIO DOWN
@@ -110,13 +107,6 @@ if(buildData) {
       tad_meanCorr <- eval(parse(text = load(corr_file)))
       stopifnot(setequal(names(tad_logFC), all_regs))
       stopifnot(setequal(names(tad_meanCorr), all_regs))
-      
-      family_file <- file.path(pipFolder, "PREP_GENE_FAMILIES_TAD_DATA", hicds,  paste0(familyType, "_family_TAD_DT.Rdata"))
-      stopifnot(file.exists(family_file))
-      family_DT <- eval(parse(text = load(family_file)))
-      agg_fam_DT <- aggregate(formula(paste0(fam_type, " ~ region")), data = family_DT, FUN=function(x)length(unique(x)))
-      tad_nFams <- setNames(agg_fam_DT$hgnc_family_short, agg_fam_DT$region)
-      stopifnot(is.numeric(tad_nFams))
       
       
       de_file <- file.path(pipOutFolder, hicds, exprds, script1_name, "DE_topTable.Rdata")
@@ -200,7 +190,6 @@ if(buildData) {
         sdLogFC = as.numeric(sdLogFC[all_regs]),
         nGenes = as.numeric(nGenes_tads[all_regs]),
         TADsize = as.numeric(tadSize[all_regs]),
-        nFamilies = as.numeric(tad_nFams[all_regs]),
         stringsAsFactors = FALSE
       )
     } # end-foreach iterating exprds
@@ -380,7 +369,7 @@ all_dt_signifFDR$FDR <- ifelse(all_dt_signifFDR$signif_FDR, "signif.", "not sign
 all_dt_signifFDR$thresh_FDR_label <- paste0("FDR=", all_dt_signifFDR$thresh_FDR)
 
 
-all_vars <- c("ratioDown", "meanCorr", "meanLogFC", "maxAbsLogFC", "sdLogFC", "nGenes", "TADsize", "nFamilies")
+all_vars <- c("ratioDown", "meanCorr", "meanLogFC", "maxAbsLogFC", "sdLogFC", "nGenes", "TADsize")
 
 
 ### PLOT THE SIGNIF PVAL FEATURES => compare dist Pval signif. vs. not signif.
@@ -433,16 +422,13 @@ for(plot_var in all_vars) {
   check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
 
   for(var in all_vars) {
-    if(var != "nFamilies") stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
-    if(var == "nFamilies") stopifnot(na.omit(check_dt[,paste0(var, ".x")]) == na.omit(check_dt[,paste0(var, ".y")]))
+    stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
     signif_FDR_pval_dt[,paste0(var)] <- ifelse(is.na(signif_FDR_pval_dt[,paste0(var, ".x")]), signif_FDR_pval_dt[,paste0(var, ".y")], signif_FDR_pval_dt[,paste0(var, ".x")] )
   }
   check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
   for(var in all_vars) {
-    if(var != "nFamilies") stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
-    if(var != "nFamilies") stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var)])
-    if(var == "nFamilies") stopifnot(na.omit(check_dt[,paste0(var, ".x")]) == na.omit(check_dt[,paste0(var, ".y")]))
-    if(var == "nFamilies") stopifnot(na.omit(check_dt[,paste0(var, ".x")]) == na.omit(check_dt[,paste0(var)]))
+    stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
+    stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var)])
     signif_FDR_pval_dt[,paste0(var, ".x")] <- NULL
     signif_FDR_pval_dt[,paste0(var, ".y")] <- NULL
   }
@@ -487,13 +473,8 @@ for(plot_var in all_vars) {
     #                        auto.key=list(title="", space = "bottom", cex=1.0, columns=length(unique(signif_FDR_pval_dt$signif_label))),
     #                        main = paste0(plot_var))
     
-    plotDT <- signif_FDR_pval_dt
-    if(plot_var=="nFamilies") {
-      plotDT <- plotDT[,c(plot_var, "both_label", "signif_label")]
-      plotDT <- na.omit(signif_FDR_pval_dt) 
-    }
     
-    myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = plotDT, #auto.key = TRUE, 
+    myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE, 
                            par.strip.text = list(cex = 1, font = 4, col = "brown"),
                            layout = c(nCol, nRow), # column, row
                            scales=list(y=list(relation="free"),
@@ -529,16 +510,13 @@ signif_FDR_pval_dt <- merge(signifFDR_dt, signifPval_dt, by = c("hicds", "exprds
 check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
 
 for(var in all_vars) {
-  if(var != "nFamilies") stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
-  if(var == "nFamilies") stopifnot(na.omit(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")]))
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
   signif_FDR_pval_dt[,paste0(var)] <- ifelse(is.na(signif_FDR_pval_dt[,paste0(var, ".x")]), signif_FDR_pval_dt[,paste0(var, ".y")], signif_FDR_pval_dt[,paste0(var, ".x")] )
 }
 check_dt <- signif_FDR_pval_dt[!is.na(signif_FDR_pval_dt$signif_FDR) & !is.na(signif_FDR_pval_dt$signif_pval),]
 for(var in all_vars) {
-  if(var != "nFamilies") stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
-  if(var != "nFamilies") stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var)])
-  if(var == "nFamilies") stopifnot(na.omit(check_dt[,paste0(var, ".x")]) == na.omit(check_dt[,paste0(var, ".y")]))
-  if(var == "nFamilies") stopifnot(na.omit(check_dt[,paste0(var, ".x")]) == na.omit(check_dt[,paste0(var)]))
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var, ".y")])
+  stopifnot(check_dt[,paste0(var, ".x")] == check_dt[,paste0(var)])
   signif_FDR_pval_dt[,paste0(var, ".x")] <- NULL
   signif_FDR_pval_dt[,paste0(var, ".y")] <- NULL
 }
@@ -594,15 +572,8 @@ plot_var=all_vars[1]
 for(plot_var in all_vars) {
   outFile <- file.path(outFolder, paste0("allDS_", plot_var, "_signif_by_thresh_density_lattice.", plotType))
   do.call(plotType, list(outFile, height=myHeight*nRow, width=myWidth*nCol))
-  
-  plotDT <- signif_FDR_pval_dt
-  
-  if(plot_var=="nFamilies") {
-    plotDT <- plotDT[,c(plot_var, "both_label", "signif_label")]
-    plotDT <- na.omit(signif_FDR_pval_dt) 
-  }
 
-  myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = plotDT, #auto.key = TRUE, 
+  myplot <- densityplot( formula(paste0("~",plot_var, "| both_label")), groups = signif_label, data = signif_FDR_pval_dt, #auto.key = TRUE, 
                # color=c("red","blue","green", "yellow"),
                # par.strip.text=list(cex=1), # width of the strip bar
                par.strip.text = list(cex = 1, font = 4, col = "brown"),
