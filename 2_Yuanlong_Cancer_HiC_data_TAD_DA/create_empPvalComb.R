@@ -25,7 +25,7 @@ source("/mnt/ed4/marie/scripts/TAD_DE_pipeline_v2/TAD_DE_utils.R")
 source("utils_fct.R")
 
 script0_name <- "0_prepGeneData"
-script9_name <- "9_runEmpPvalMeanTADLogFC"
+script9_name <- "910000_runEmpPvalMeanTADLogFC"
 
 plotType <- "png"
 myHeight <- ifelse(plotType=="png", 400, 7)
