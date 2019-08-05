@@ -16,8 +16,10 @@ startTime <- Sys.time()
 script0_name <- "0_prepGeneData"
 script3_name <- "3_runMeanTADLogFC"
 script4_name <- "4_runMeanTADCorr"
-script19_name <- "19_SAM_emp_measurement"
-script8c_name <- "8c10000_runAllDown"
+#script19_name <- "19_SAM_emp_measurement" # -> for 10000 permut
+script19_name <- "19onlyFC_SAM_emp_measurement" # 
+#script8c_name <- "8c10000_runAllDown" # -> for 10000 permut
+script8c_name <- "8cOnlyRatioDown_runAllDown" # -> for 10000 permut
 
 require(foreach)
 require(doMC)
@@ -29,7 +31,7 @@ stopifnot(dir.exists(pipFolder))
 pipOutFolder <- file.path(pipFolder, "PIPELINE", "OUTPUT_FOLDER")
 stopifnot(dir.exists(pipOutFolder))
 
-outFolder <- "CREATE_FINAL_TABLE"
+outFolder <- "CREATE_FINAL_TABLE" # "CREATE_FINAL_TABLE_10000" for 10000 permut
 dir.create(outFolder, recursive = TRUE)
 
 args <- commandArgs(trailingOnly = TRUE)

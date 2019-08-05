@@ -33,11 +33,20 @@ stopifnot(dir.exists(corrAcrossFolder))
 # all_pvalComb_files <- list.files(pipOutFolder, recursive = TRUE, pattern="emp_pval_combined.Rdata", full.names = FALSE)
 # stopifnot(length(all_pvalComb_files) > 0)
 
+#script9_name <- "910000_runEmpPvalMeanTADLogFC" # => EMPPVALFC_EMPPVALCORR_10000
+script9_name <- "9_runEmpPvalMeanTADLogFC"
+script10_name <- "1010000_runEmpPvalMeanTADCorr"
+
 all_fc_files <- list.files(pipOutFolder, recursive = TRUE, pattern="emp_pval_meanLogFC.Rdata", full.names = FALSE)
+all_fc_files <- all_fc_files[grep(script9_name, all_fc_files)]
 stopifnot(length(all_fc_files) > 0)
 
 all_meanCorr_files <- list.files(pipOutFolder, recursive = TRUE, pattern="emp_pval_meanCorr.Rdata", full.names = FALSE)
+all_meanCorr_files <- all_meanCorr_files[grep(script10_name, all_meanCorr_files)]
 stopifnot(length(all_meanCorr_files) > 0)
+
+stopifnot(length(all_meanCorr_files) == length(all_fc_files))
+
 # 
 # dataFile <- file.path(dataFolder, "allData_within_between_coexpr.Rdata")
 # stopifnot(file.exists(dataFile))

@@ -3,6 +3,8 @@ options(scipen=100)
 # Rscript create_empPvalComb.R K562_40kb TCGAlaml_wt_mutFLT3
 # Rscript create_empPvalComb.R   # to run all datasets in one shot
 
+setDir <- ""
+
 hicds="K562_40kb"
 exprds="TCGAlaml_wt_mutFLT3"
 
@@ -25,7 +27,8 @@ source("/mnt/ed4/marie/scripts/TAD_DE_pipeline_v2/TAD_DE_utils.R")
 source("utils_fct.R")
 
 script0_name <- "0_prepGeneData"
-script9_name <- "910000_runEmpPvalMeanTADLogFC"
+script9_name <- "910000_runEmpPvalMeanTADLogFC" # => CREATE_EMPPVALCOMB_10000permut
+script9_name <- "9_runEmpPvalMeanTADLogFC" # 
 
 plotType <- "png"
 myHeight <- ifelse(plotType=="png", 400, 7)
