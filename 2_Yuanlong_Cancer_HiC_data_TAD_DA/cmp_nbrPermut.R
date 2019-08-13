@@ -28,10 +28,10 @@ finalTable_0 <- file.path("CREATE_FINAL_TABLE_10000permut", "all_result_dt.Rdata
 finalTable_1 <- file.path("CREATE_FINAL_TABLE", "all_result_dt.Rdata")
 finalTable_1_txt <- file.path("CREATE_FINAL_TABLE", "all_result_dt.txt")
 
-
+buildTable <- TRUE
 CMP_SCRIPT9 <- FALSE
+CMP_COMBPVAL <- FALSE
 CMP_CREATETABLE <- TRUE
-CMP_COMBPVAL <- TRUE
 
 source("../Cancer_HiC_data_TAD_DA/utils_fct.R")
 
@@ -163,56 +163,70 @@ if(CMP_COMBPVAL) {
 
 
 if(CMP_CREATETABLE) {
-  hicds="GSE105381_HepG2_40kb"
-  all_comp_permut_DT <- foreach(hicds = all_hicds, .combine='rbind') %do% {
-    exprds="TCGAlihc_norm_lihc"  
-    ds_dt <- foreach(exprds = all_exprds[[paste0(hicds)]], .combine='rbind') %do% {
-      cat("... start ", hicds, " - ", exprds, "\n")
-      
-      stopifnot(file.exists(finalTable_0))
-      final_DT_0 <- eval(parse(text = load(finalTable_0)))
-      
-      stopifnot(file.exists(finalTable_1))
-      final_DT_1 <- eval(parse(text = load(finalTable_1)))
-      
-      # final_DT_1 <- read.delim(finalTable_1_txt, header=T, stringsAsFactors = FALSE)
-      
-      final_DT_0 <- final_DT_0[order(final_DT_0$hicds, final_DT_0$exprds, final_DT_0$region),]
-      final_DT_1 <- final_DT_1[order(final_DT_1$hicds, final_DT_1$exprds, final_DT_1$region),]
-      
-      # colnames(final_DT_0) <- paste0(colnames(final_DT_0), "_0")
-      # colnames(final_DT_1) <- paste0(colnames(final_DT_1), "_1")
-      
-      
-      all_vars <- c("meanLogFC_thresh_FDR0.1", "meanLogFC_thresh_FDR0.2",
-                    "meanCorr_thresh_FDR0.1", "meanCorr_thresh_FDR0.2")
-      
-      same_vars <- c("hicds", "exprds", "region")
-      #"region_genes", "meanLogFC", 
-       #              "meanCorr", "ratioDown")
-      
-      for(curr_var in same_vars) {
-        stopifnot(final_DT_1[,curr_var] == final_DT_0[,curr_var])
-      }
-      all_vars %in% colnames(final_DT_0)
-      all_vars %in% colnames(final_DT_1)
-      final_DT <- merge(final_DT_0[,c(same_vars, all_vars)], 
-                        final_DT_1[,c(same_vars, all_vars)], 
-                        by =same_vars, suffixes = c("_0","_1"))
-     
-      
-      final_DT
-      
-    } # end-foreach iterating exprds
-    ds_dt
-  } # end-foreach iterating over all_comp_permut_DT
+  if(buildTable) {
+    hicds="GSE105381_HepG2_40kb"
+    all_comp_permut_DT <- foreach(hicds = all_hicds, .combine='rbind') %do% {
+      exprds="TCGAlihc_norm_lihc"  
+      ds_dt <- foreach(exprds = all_exprds[[paste0(hicds)]], .combine='rbind') %do% {
+        cat("... start ", hicds, " - ", exprds, "\n")
+        
+        stopifnot(file.exists(finalTable_0))
+        final_DT_0 <- eval(parse(text = load(finalTable_0)))
+        
+        stopifnot(file.exists(finalTable_1))
+        final_DT_1 <- eval(parse(text = load(finalTable_1)))
+        
+        # final_DT_1 <- read.delim(finalTable_1_txt, header=T, stringsAsFactors = FALSE)
+        
+        final_DT_0 <- final_DT_0[order(final_DT_0$hicds, final_DT_0$exprds, final_DT_0$region),]
+        final_DT_1 <- final_DT_1[order(final_DT_1$hicds, final_DT_1$exprds, final_DT_1$region),]
+        
+        # colnames(final_DT_0) <- paste0(colnames(final_DT_0), "_0")
+        # colnames(final_DT_1) <- paste0(colnames(final_DT_1), "_1")
+        
+        
+        # all_vars <- c("meanLogFC_thresh_FDR0.1", "meanLogFC_thresh_FDR0.2",
+        #               "meanCorr_thresh_FDR0.1", "meanCorr_thresh_FDR0.2")
+        # 
+        
+        all_vars <- c("meanLogFC_thresh_FDR0.1", "meanLogFC_thresh_FDR0.2",
+                      "meanCorr_thresh_FDR0.1", "meanCorr_thresh_FDR0.2", 
+                      "signifFDR_0.1", "signifFDR_0.2")
+        
+        
+        same_vars <- c("hicds", "exprds", "region")
+        #"region_genes", "meanLogFC", 
+         #              "meanCorr", "ratioDown")
+        
+        for(curr_var in same_vars) {
+          stopifnot(final_DT_1[,curr_var] == final_DT_0[,curr_var])
+        }
+        final_DT <- merge(final_DT_0[,c(same_vars, all_vars)], 
+                          final_DT_1[,c(same_vars, all_vars)], 
+                          by =same_vars, suffixes = c("_0","_1"))
+       
+        
+        final_DT
+        
+      } # end-foreach iterating exprds
+      ds_dt
+    } # end-foreach iterating over all_comp_permut_DT
+    
+    save(all_comp_permut_DT, file=file.path(outFolder, "all_comp_permut_DT_ft.Rdata"), version=2)
   
-  save(all_comp_permut_DT, "all_comp_permut_DT_ft.Rdata")
-  
+  } else {
+    cat("...load dt\n")
+    all_comp_permut_DT <- eval(parse(text=load("all_comp_permut_DT_ft.Rdata")))
+    
+  }
   totDS <- length(unique(paste0(all_comp_permut_DT$hicds, "_",all_comp_permut_DT$exprds)))
   
+  all_vars <- c("meanLogFC_thresh_FDR0.1", "meanLogFC_thresh_FDR0.2",
+                "meanCorr_thresh_FDR0.1", "meanCorr_thresh_FDR0.2", 
+                "signifFDR_0.1", "signifFDR_0.2")
+  plot_vars <- all_vars[!all_vars %in% c("signifFDR_0.1", "signifFDR_0.2")]
   
-  for(vars in all_vars) {
+  for(vars in plot_vars) {
     
     myx <- all_comp_permut_DT[,paste0(vars, "_0")]
     myy <- all_comp_permut_DT[,paste0(vars, "_1")]
@@ -236,6 +250,55 @@ if(CMP_CREATETABLE) {
     
     
   }
+  
+  # signif 0.1 both _0 and _1
+  cat(paste0("... signif 0.1 both _0 and _1\t:\t",
+             sum(all_comp_permut_DT$signifFDR_0.1_1 & all_comp_permut_DT$signifFDR_0.1_0), "/", nrow(all_comp_permut_DT), " (",
+             round(sum(all_comp_permut_DT$signifFDR_0.1_1 & all_comp_permut_DT$signifFDR_0.1_0)/ nrow(all_comp_permut_DT)*100, 2), "%)\n"))
+  
+  
+  # signif 0.1 in _0 not _1
+  cat(paste0("... signif 0.1 in _0 not _1\t:\t",
+             sum(! all_comp_permut_DT$signifFDR_0.1_1 & all_comp_permut_DT$signifFDR_0.1_0), "/", nrow(all_comp_permut_DT), " (",
+             round(sum(! all_comp_permut_DT$signifFDR_0.1_1 & all_comp_permut_DT$signifFDR_0.1_0)/ nrow(all_comp_permut_DT)*100, 2), "%)\n"))
+  
+  
+  # signif 0.1 in _1 not _0
+  cat(paste0("... signif 0.1 _1 not in _0 \t:\t",
+             sum(all_comp_permut_DT$signifFDR_0.1_1 & ! all_comp_permut_DT$signifFDR_0.1_0), "/", nrow(all_comp_permut_DT), " (",
+             round(sum(all_comp_permut_DT$signifFDR_0.1_1 & ! all_comp_permut_DT$signifFDR_0.1_0)/ nrow(all_comp_permut_DT)*100, 2), "%)\n"))
+  
+  # not signif 0.1 _0 and _1
+  cat(paste0("... not signif 0.1 _0 and _1\t:\t",
+             sum(! all_comp_permut_DT$signifFDR_0.1_1 & ! all_comp_permut_DT$signifFDR_0.1_0), "/", nrow(all_comp_permut_DT), " (",
+             round(sum(! all_comp_permut_DT$signifFDR_0.1_1 & ! all_comp_permut_DT$signifFDR_0.1_0)/ nrow(all_comp_permut_DT)*100, 2), "%)\n"))
+  
+  #############################
+  # signif 0.2 both _0 and _1
+  cat(paste0("... signif 0.2 both _0 and _1\t:\t",
+             sum(all_comp_permut_DT$signifFDR_0.2_1 & all_comp_permut_DT$signifFDR_0.2_0), "/", nrow(all_comp_permut_DT), " (",
+             round(sum(all_comp_permut_DT$signifFDR_0.2_1 & all_comp_permut_DT$signifFDR_0.2_0)/ nrow(all_comp_permut_DT)*100, 2), "%)\n"))
+  
+  
+  # signif 0.2 in _0 not _1
+  cat(paste0("... signif 0.2 in _0 not _1\t:\t",
+             sum(! all_comp_permut_DT$signifFDR_0.2_1 & all_comp_permut_DT$signifFDR_0.2_0), "/", nrow(all_comp_permut_DT), " (",
+             round(sum(! all_comp_permut_DT$signifFDR_0.2_1 & all_comp_permut_DT$signifFDR_0.2_0)/ nrow(all_comp_permut_DT)*100, 2), "%)\n"))
+  
+  
+  # signif 0.2 in _1 not _0
+  cat(paste0("... signif 0.2 _1 not in _0 \t:\t",
+             sum(all_comp_permut_DT$signifFDR_0.2_1 & ! all_comp_permut_DT$signifFDR_0.2_0), "/", nrow(all_comp_permut_DT), " (",
+             round(sum(all_comp_permut_DT$signifFDR_0.2_1 & ! all_comp_permut_DT$signifFDR_0.2_0)/ nrow(all_comp_permut_DT)*100, 2), "%)\n"))
+  
+  # not signif 0.2 _0 and _1
+  cat(paste0("... not signif 0.2 _0 and _1\t:\t",
+             sum(! all_comp_permut_DT$signifFDR_0.2_1 & ! all_comp_permut_DT$signifFDR_0.2_0), "/", nrow(all_comp_permut_DT), " (",
+             round(sum(! all_comp_permut_DT$signifFDR_0.2_1 & ! all_comp_permut_DT$signifFDR_0.2_0)/ nrow(all_comp_permut_DT)*100, 2), "%)\n"))
+  
+  
+  
+  
   
 } # end-if comp create table
 

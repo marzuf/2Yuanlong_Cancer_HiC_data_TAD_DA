@@ -4,6 +4,8 @@
 
 # Rscript create_final_table.R
 
+# 12.08.2019 -> added start and end positions
+
 options(scipen = 100)
 
 SSHFS <- FALSE
@@ -112,6 +114,12 @@ if(buildTable) {
       stopifnot(file.exists(fc_file))
       tad_fc <- eval(parse(text = load(fc_file)))
       all_regs <- names(tad_fc)
+
+      stopifnot(all_regs %in% g2t_DT$region)
+      all_regs_start <- setNames(g2t_DT$start, g2t_DT$region)
+      all_regs_end <- setNames(g2t_DT$end, g2t_DT$region)
+
+
       
       corr_file <- file.path(pipOutFolder, hicds, exprds, script4_name, "all_meanCorr_TAD.Rdata")
       stopifnot(file.exists(corr_file))  
@@ -166,12 +174,19 @@ if(buildTable) {
         paste0(x_symbols, collapse=",")
       })
       names(tad_genes) <- all_regs
+
+      stopifnot(all_regs %in% names(all_regs_end))
+      stopifnot(all_regs %in% names(all_regs_start))
       
       
       exprds_hicds_dt <- data.frame(
         hicds = hicds,
         exprds = exprds,
         region = all_regs,
+
+        start = all_regs_start[all_regs],
+        end = all_regs_end[all_regs],
+
         region_genes = tad_genes[all_regs],
         meanLogFC = tad_fc[all_regs],
         meanCorr = tad_corr[all_regs],

@@ -1,5 +1,7 @@
 options(scipen=100)
 
+setDir=""
+
 # Rscript intersect_FDR_combPval_lolliPlot.R K562_40kb TCGAlaml_wt_mutFLT3
 # Rscript intersect_FDR_combPval_lolliPlot.R   # to run all datasets in one shot
 
@@ -15,7 +17,7 @@ cat("> START ", script_name, "\n")
 SSHFS <- FALSE
 
 buildData <- TRUE
-separateHeatmap <- FALSE
+separateHeatmap <- TRUE
 
 require(foreach)
 require(doMC)
@@ -35,7 +37,7 @@ script0_name <- "0_prepGeneData"
 script3_name <- "3_runMeanTADLogFC"
 script4_name <- "4_runMeanTADCorr"
 script9_name <- "9_runEmpPvalMeanTADLogFC"
-script19_name <- "19_SAM_emp_measurement"
+script19_name <- "19onlyFC_SAM_emp_measurement"
 
 plotType <- "png"
 myHeight <- ifelse(plotType=="png", 400, 7)

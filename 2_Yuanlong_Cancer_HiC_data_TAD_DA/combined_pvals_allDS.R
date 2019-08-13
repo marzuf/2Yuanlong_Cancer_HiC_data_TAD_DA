@@ -2,6 +2,8 @@ options(scipen=100)
 
 # Rscript combined_pvals_allDS.R 
 
+setDir=""
+
 script_name <- "combined_pvals_allDS.R"
 
 startTime <- Sys.time()

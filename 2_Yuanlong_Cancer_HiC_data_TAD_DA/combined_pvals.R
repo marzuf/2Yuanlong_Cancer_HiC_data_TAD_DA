@@ -1,5 +1,7 @@
 options(scipen=100)
 
+setDir=""
+
 # Rscript combined_pvals.R K562_40kb TCGAlaml_wt_mutFLT3
 # Rscript combined_pvals.R   # to run all datasets in one shot
 

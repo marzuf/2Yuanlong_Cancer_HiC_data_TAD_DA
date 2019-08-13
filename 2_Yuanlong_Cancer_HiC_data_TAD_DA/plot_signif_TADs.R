@@ -1,5 +1,7 @@
 options(scipen=100)
 
+setDir=""
+
 # Rscript plot_signif_TADs.R <FDR_threshold> <p_value_threshold> <hicds> <exprds>
 # Rscript plot_signif_TADs.R <FDR_threshold> <p_value_threshold> # to run all datasets in one shot
 # Rscript plot_signif_TADs.R 0.1 0.01 K562_40kb TCGAlaml_wt_mutFLT3
@@ -49,9 +51,9 @@ script0_name <- "0_prepGeneData"
 script1_name <- "1_runGeneDE"
 script3_name <- "3_runMeanTADLogFC"
 script4_name <- "4_runMeanTADCorr"
-script8c_name <- "8c_runAllDown"
+script8c_name <- "8cOnlyRatioDown_runAllDown"
 script9_name <- "9_runEmpPvalMeanTADLogFC"
-script19_name <- "19_SAM_emp_measurement"
+script19_name <- "19onlyFC_SAM_emp_measurement"
 
 
 samInFolder <- file.path("SAM_EMP_MEASUREMENT_MEANCORR")

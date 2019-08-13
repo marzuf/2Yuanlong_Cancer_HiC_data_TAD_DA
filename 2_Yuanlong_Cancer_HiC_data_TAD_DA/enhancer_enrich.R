@@ -254,6 +254,23 @@ for(yvar in all_vars) {
   addCorr(x = myx, y = myy, bty="n")
   foo <- dev.off()
   cat(paste0("... written: ", outFile, "\n"))
+  
+  
+  
+  outFile <- file.path(outFolder, paste0("allDS", "_", gsub("\\(|\\)|\\/","_", gsub(" ", "", yvar)), "_vs_", gsub("\\(|\\)|\\/","_", gsub(" ", "", xvar)), "_",  "densplot_log10.", plotType))
+  do.call(plotType, list(outFile, height=myHeight, width=myWidth))
+  densplot(
+    x=myx,
+    y=log10(myy),
+    xlab = myxlab,
+    ylab = paste0(myylab, " [log10]"),
+    main = paste0(yvar, " vs. ", xvar)
+  )
+  mtext(side=3, text = paste0("allDS - n=", totDS))
+  addCorr(x = myx, y = myy, bty="n")
+  foo <- dev.off()
+  cat(paste0("... written: ", outFile, "\n"))
+  
 
 
 }
@@ -279,6 +296,19 @@ for(yvar in all_vars) {
   mtext(side=3, text=paste0("allDS - n=", totDS, " - pval thresh.=", signifThresh))
   foo <- dev.off()
   cat(paste0("... written: ", outFile, "\n"))
+  
+  
+  all_chromHMM_tadCount_DT[,paste0(gsub("\\(|\\)|\\/","_", gsub(" ", "", yvar)), "_log10")] <- log10(all_chromHMM_tadCount_DT[,paste0(gsub("\\(|\\)|\\/","_", gsub(" ", "", yvar)))])
+  
+  outFile <- file.path(outFolder, paste0(gsub("\\(|\\)|\\/","_", gsub(" ", "", yvar)), "_bysignif_",  "boxplot_log10.", plotType))
+  do.call(plotType, list(outFile, height=myHeight, width=myWidth))
+  boxplot(as.formula(paste0(gsub("\\(|\\)|\\/","_", gsub(" ", "", yvar), "_log10"), " ~ ", xvar)), 
+          data = all_chromHMM_tadCount_DT, 
+          ylab=paste0(myylab, " [log10]"), main=paste0(yvar, " in signif./not signif. TADs" ))
+  mtext(side=3, text=paste0("allDS - n=", totDS, " - pval thresh.=", signifThresh))
+  foo <- dev.off()
+  cat(paste0("... written: ", outFile, "\n"))
+  
 
 }
 # 

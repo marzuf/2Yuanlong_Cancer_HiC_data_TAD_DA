@@ -25,6 +25,7 @@ myHeight <- ifelse(plotType=="png", 500, 7)
 myWidth <- myHeight
 plotCex <- 1.4
 
+script6_name <- "6_runPermutationsMeanLogFC"
 
 outFolder <- "SCATTERPLOT_FDR_ALLDS"
 dir.create(outFolder, recursive=TRUE)
@@ -38,6 +39,7 @@ stopifnot(length(all_fc_files) > 0)
 all_fcPermut_files <- list.files(pipOutFolder, recursive = TRUE, pattern="meanLogFC_permDT.Rdata", full.names = FALSE)
 stopifnot(length(all_fcPermut_files) > 0)
 
+all_fcPermut_files <- all_fcPermut_files[grepl(script6_name, all_fcPermut_files)]
 
 stopifnot(length(all_fc_files) == length(all_fcPermut_files) )
 

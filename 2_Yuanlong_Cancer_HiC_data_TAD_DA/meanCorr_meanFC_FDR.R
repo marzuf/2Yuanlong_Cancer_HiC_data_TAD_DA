@@ -2,6 +2,8 @@
 
 options(scipen=100)
 
+setDir = ""
+
 # Rscript meanCorr_meanFC_FDR.R K562_40kb TCGAlaml_wt_mutFLT3
 # Rscript meanCorr_meanFC_FDR.R   # to run all datasets in one shot
 
@@ -29,7 +31,8 @@ source("utils_fct.R")
 script0_name <- "0_prepGeneData"
 script3_name <- "3_runMeanTADLogFC"
 script4_name <- "4_runMeanTADCorr"
-script19_name <- "19_SAM_emp_measurement"
+#script19_name <- "19_SAM_emp_measurement" # -> OLD: 10000 permut
+script19_name <- "19onlyFC_SAM_emp_measurement" 
 
 plotType <- "png"
 myHeight <- ifelse(plotType=="png", 500, 7)
@@ -61,7 +64,6 @@ outFolder <- "MEANCORR_MEANFC_FDR"
 dir.create(outFolder, recursive=TRUE)
 
 all_sampTypes <- c("sameNbr", "sameKb", "fixKb")
-
 
 
 fc_col <- "dodgerblue1"

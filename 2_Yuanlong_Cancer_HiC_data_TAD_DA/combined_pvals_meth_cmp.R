@@ -3,6 +3,8 @@ options(scipen=100)
 # Rscript combined_pvals_meth_cmp.R K562_40kb TCGAlaml_wt_mutFLT3
 # Rscript combined_pvals_meth_cmp.R   # to run all datasets in one shot
 
+setDir=""
+
 hicds="K562_40kb"
 exprds="TCGAlaml_wt_mutFLT3"
 
@@ -14,7 +16,7 @@ cat("> START ", script_name, "\n")
 
 SSHFS <- FALSE
 
-buildData <- FALSE
+buildData <- TRUE
 
 require(foreach)
 require(doMC)

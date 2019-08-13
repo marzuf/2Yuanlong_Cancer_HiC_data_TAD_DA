@@ -3,10 +3,12 @@ options(scipen=100)
 # Rscript features_signif_TADs.R K562_40kb TCGAlaml_wt_mutFLT3
 # Rscript features_signif_TADs.R   # to run all datasets in one shot
 
+setDir=""
+
 hicds="K562_40kb"
 exprds="TCGAlaml_wt_mutFLT3"
 
-script_name <- "features_signif_TADs_withFam.R"
+script_name <- "features_signif_TADs.R"
 
 startTime <- Sys.time()
 
@@ -35,9 +37,11 @@ script0_name <- "0_prepGeneData"
 script1_name <- "1_runGeneDE"
 script3_name <- "3_runMeanTADLogFC"
 script4_name <- "4_runMeanTADCorr"
-script8c_name <- "8c_runAllDown"
+#script8c_name <- "8c_runAllDown" # -> for the 10000 permut
+script8c_name <- "8cOnlyRatioDown_runAllDown"
 script9_name <- "9_runEmpPvalMeanTADLogFC"
-script19_name <- "19_SAM_emp_measurement"
+#script19_name <- "19_SAM_emp_measurement" # -> for the 10000 permut
+script19_name <- "19onlyFC_SAM_emp_measurement" 
 
 plotType <- "png"
 myHeight <- ifelse(plotType=="png", 400, 7)
