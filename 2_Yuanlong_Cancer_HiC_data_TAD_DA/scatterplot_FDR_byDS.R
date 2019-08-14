@@ -41,6 +41,8 @@ stopifnot(length(all_fcPermut_files) > 0)
 script6_name <- "6_runPermutationsMeanLogFC"
 # /6_runPermutationsMeanLogFC/meanLogFC_permDT.Rdata"
 
+all_fcPermut_files <- all_fcPermut_files[grepl(script6_name, all_fcPermut_files)]
+
 stopifnot(length(all_fc_files) == length(all_fcPermut_files) )
 
 

@@ -32,7 +32,7 @@ script0_name <- "0_prepGeneData"
 script3_name <- "3_runMeanTADLogFC"
 script4_name <- "4_runMeanTADCorr"
 #script19_name <- "19_SAM_emp_measurement" # -> OLD: 10000 permut
-script19_name <- "19onlyFC_SAM_emp_measurement" 
+script19_name <- "19onlyFCandCorr_SAM_emp_measurement" 
 
 plotType <- "png"
 myHeight <- ifelse(plotType=="png", 500, 7)
